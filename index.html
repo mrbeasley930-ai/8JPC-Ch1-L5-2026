@@ -1,0 +1,1565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<script>
+/* FIRSTNAME-ONLY v1 (16 Oct 2026): the sign-in keeps the pupil's first name only.
+   A one-letter initial typed after it is kept ("Ahmed A"), so two pupils with the same first name stay apart.
+   Also rewrites saves/loads to the class store, so a remembered full name cannot recreate a surname record.
+   Beyond the Classroom (sc-*) books are left alone. */
+(function(){
+  function fn(s){
+    s=String(s==null?'':s).replace(/\s+/g,' ').trim(); if(!s) return s;
+    if(/^yu luo(\s|$)/i.test(s)) return s.slice(0,6);
+    var w=s.split(' '); if(w.length<2) return s;
+    if(w.length===2 && w[1].replace(/[^A-Za-z]/g,'').length===1) return w[0]+' '+w[1].replace(/[^A-Za-z]/g,'');
+    return w[0];
+  }
+  window.__firstNameOnly=fn;
+  var ST='vestigia-store.mrbeasley930.workers.dev';
+  function skip(b){ return /^sc-/.test(String(b||'')); }
+  function fixKey(k){ k=String(k); var p=k.split('::'); if(p.length<3||skip(p[0])) return k; return p[0]+'::'+p[1]+'::'+fn(p.slice(2).join('::')); }
+  var of=window.fetch;
+  if(of) window.fetch=function(input,init){
+    try{
+      var url=typeof input==='string'?input:(input&&input.url)||'';
+      if(url.indexOf(ST)>=0 && !/[?&]all=1/.test(url)){
+        var u=new URL(url,location.href), k=u.searchParams.get('key');
+        if(k){ var nk=fixKey(k); if(nk!==k){ u.searchParams.set('key',nk); input=(typeof input==='string')?u.toString():new Request(u.toString(),input); } }
+        if(init && typeof init.body==='string' && /post|put/i.test(init.method||'')){
+          var b=JSON.parse(init.body);
+          if(b && b.key && !skip(b.book||String(b.key).split('::')[0])){
+            b.key=fixKey(b.key);
+            if(typeof b.cand==='string') b.cand=fn(b.cand);
+            if(b.data && typeof b.data==='object' && typeof b.data.name==='string') b.data.name=fn(b.data.name);
+            init=Object.assign({},init,{body:JSON.stringify(b)});
+          }
+        }
+      }
+    }catch(e){}
+    return of.call(this,input,init);
+  };
+  var IDS=['g-cand','sg-cand','cand','gName'];
+  function tidy(t){ IDS.forEach(function(id){ var el=document.getElementById(id); if(el && el!==t && el.value && /\S\s+\S/.test(el.value)) el.value=fn(el.value); }); }
+  document.addEventListener('click',function(e){ tidy(e.target); },true);
+  document.addEventListener('keydown',function(e){ if(e.key==='Enter') tidy(null); },true);
+  document.addEventListener('submit',function(){ tidy(null); },true);
+  document.addEventListener('change',function(){ tidy(null); },true);
+})();
+</script>
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JPC · Ch1 Lesson 5 &mdash; To the Island (JPC)</title>
+<style>
+  * { box-sizing:border-box; margin:0; padding:0; }
+  :root{
+    --gold:#f2cd6e; --gold-deep:#b8860b; --terra:#8f3320; --terra-soft:#a24230;
+    --olive:#4f7c3e; --marble:#f6eed6; --marble-2:#e8dab6; --edge:#cdb98c;
+    --ink:#2b2012; --ink-2:#43331e; --ink-3:#6a4620; --papyrus:#f3e6c4; --sepia:#6b3f1e;
+  }
+  html,body{ overflow-x:hidden; }
+  body {
+    font-family: Georgia,'Palatino Linotype',serif;
+    background: linear-gradient(180deg,#0b0f1c 0%,#1a2233 22%,#2f3646 44%,#4d3f34 68%,#2a1a10 100%);
+    background-attachment: fixed; color:#f1e3c5; min-height:100vh; padding:20px; line-height:1.55; position:relative;
+  }
+
+  /* ===================== BACKDROP: the cave at Spelunca, torchlit, a burning house on the ridge ===================== */
+  .scene, .motes { position:fixed; inset:0; z-index:-2; pointer-events:none; }
+  .motes { z-index:-1; }
+  .scene::before{
+    content:''; position:absolute; inset:0;
+    background:
+      radial-gradient(60% 40% at 50% 100%, rgba(233,170,90,.55), rgba(233,170,90,.18) 40%, rgba(233,170,90,0) 70%),
+      radial-gradient(40% 30% at 86% 62%, rgba(255,140,50,.35), rgba(255,140,50,0) 70%);
+    animation: torch 7s ease-in-out infinite;
+  }
+  .skyline{ position:absolute; left:0; bottom:0; width:100%; height:min(52vh,360px); display:block;
+    filter: drop-shadow(0 -3px 26px rgba(0,0,0,.5)); }
+  @keyframes torch { 0%,100%{opacity:.85;} 50%{opacity:1;} }
+
+  .mote{ position:absolute; bottom:-12px; border-radius:50%;
+    background: radial-gradient(circle, rgba(255,190,110,.95), rgba(255,140,60,0) 70%);
+    opacity:0; animation-name:rise; animation-iteration-count:infinite; animation-timing-function:linear; }
+  @keyframes rise{
+    0%{ transform:translateY(0) translateX(0); opacity:0; }
+    10%{ opacity:.6; }
+    55%{ transform:translateY(-42vh) translateX(28px); opacity:.35; }
+    100%{ transform:translateY(-80vh) translateX(-14px); opacity:0; }
+  }
+
+  .wrap { max-width:940px; margin:0 auto; position:relative; z-index:1; }
+  header { text-align:center; margin-bottom:18px; padding-top:6px; }
+  .logo { font-size:44px; color:var(--gold); letter-spacing:8px; text-shadow:0 2px 10px rgba(0,0,0,.7),0 0 26px rgba(242,205,110,.35); }
+  .lat { font-size:13.5px; color:#ecd49a; letter-spacing:3px; margin-top:3px; font-style:italic; text-shadow:0 1px 4px rgba(0,0,0,.6); }
+  .sub { color:#f4e0b4; font-style:italic; margin-top:9px; font-size:15px; text-shadow:0 1px 4px rgba(0,0,0,.6); }
+  .spec { color:#dcc290; font-size:12.5px; margin-top:4px; letter-spacing:1px; text-shadow:0 1px 3px rgba(0,0,0,.6); }
+
+  .tablebar { display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:center;
+    background:rgba(10,14,24,.68); backdrop-filter:blur(5px); border:1px solid rgba(242,205,110,.38); border-radius:10px; padding:10px 14px; margin-bottom:16px; box-shadow:0 6px 20px rgba(0,0,0,.35); }
+  .scorepill { background:linear-gradient(135deg,#f2cd6e,#b8860b); color:#241806; font-weight:bold;
+    border-radius:20px; padding:6px 16px; font-size:14px; box-shadow:0 2px 8px rgba(0,0,0,.35); }
+
+  .tabs { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-bottom:20px; }
+  .tab { padding:9px 13px; font-family:Georgia,serif; font-size:13px; font-weight:bold;
+    background:linear-gradient(135deg,#31281a 0%,#1c1408 100%); color:#f1e3c5;
+    border:2px solid #c69a3c; border-radius:6px; cursor:pointer; transition:all .2s; box-shadow:0 3px 10px rgba(0,0,0,.3); }
+  .tab:hover { box-shadow:0 0 14px rgba(242,205,110,.55); transform:translateY(-2px); }
+  .tab.active { background:linear-gradient(135deg,#f2cd6e 0%,#b8860b 100%); color:#241806; }
+  .tab .done { font-size:11px; color:#5cc98a; }
+  .tab.active .done { color:#241806; }
+
+  .panel { display:none; }
+  .panel.active { display:block; animation:fade .35s ease; }
+  @keyframes fade { from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:none;} }
+
+  .card { position:relative; overflow:hidden; border:1px solid var(--edge); border-radius:12px;
+    padding:22px 24px; margin-bottom:18px; color:var(--ink-2);
+    background:
+      repeating-linear-gradient(118deg, rgba(120,90,50,.035) 0 7px, rgba(120,90,50,0) 7px 24px),
+      linear-gradient(180deg, #f7efd9 0%, #eaddbb 100%);
+    box-shadow:0 16px 42px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.75); }
+  .card h2 { color:var(--terra); font-size:22px; margin-bottom:6px; letter-spacing:.3px; text-shadow:0 1px 0 rgba(255,255,255,.6); }
+  .card h3 { color:var(--ink-3); font-size:16px; margin:16px 0 8px; }
+  .card p { margin-bottom:11px; color:var(--ink-2); }
+  .lead { color:var(--terra); font-weight:bold; }
+  .pill { display:inline-block; background:rgba(184,134,11,.14); border:1px solid var(--gold-deep); border-radius:18px;
+    padding:3px 13px; color:#7a4a14; font-size:12.5px; margin:3px; }
+  .note { color:#7c6440; font-size:13px; font-style:italic; }
+  table.gram { width:100%; border-collapse:collapse; margin:10px 0 4px; font-size:13.5px; }
+  table.gram th, table.gram td { border:1px solid var(--edge); padding:6px 9px; text-align:left; vertical-align:top; }
+  table.gram th { background:rgba(184,134,11,.16); color:#7a4a12; }
+  table.gram td.rl { background:rgba(120,90,40,.14); color:var(--ink); font-weight:bold; white-space:nowrap; }
+  .lat-word { color:#7a3b1e; font-style:italic; }
+
+  /* the full Latin text block */
+  .textblock { background:#fbf5e3; border:1px solid #cbb37f; border-left:5px solid var(--terra); border-radius:8px;
+    padding:14px 18px; margin:10px 0 14px; font-size:15.5px; line-height:1.7; color:#2e2312; }
+  .textblock .ln { display:inline-block; width:26px; color:#9a8256; font-size:11.5px; font-style:normal; }
+  .textblock i { color:#3a2c18; }
+
+  .bookpage { background:var(--papyrus); color:#2e2312; border-radius:8px; border:1px solid #cbb37f;
+    padding:18px 22px 16px; margin:12px 0 6px; box-shadow:0 6px 18px rgba(0,0,0,.35);
+    background-image:repeating-linear-gradient(transparent, transparent 27px, #e2d1a2 27px, #e2d1a2 28px);
+    line-height:28px; font-size:15px; }
+  .bookpage .bp-date { float:right; color:#7a6338; font-size:13.5px; }
+  .bookpage .bp-title { font-weight:bold; text-decoration:underline; color:var(--sepia); }
+  .bookpage .bp-rule { border:2px solid var(--sepia); border-radius:4px; padding:2px 10px; display:inline-block;
+    margin:4px 0; background:rgba(120,70,20,.08); font-weight:bold; }
+  .bookpage table { border-collapse:collapse; margin:4px 0; background:#fbf3d9; line-height:1.4; }
+  .bookpage table th, .bookpage table td { border:1px solid #b9a06e; padding:3px 10px; font-size:13.5px; color:#2e2312; vertical-align:top; }
+  .bookpage table th { background:#ece0bf; color:var(--sepia); }
+  .bookpage i { color:var(--sepia); }
+  .copybar { display:flex; flex-wrap:wrap; align-items:center; gap:12px; margin:10px 0 4px;
+    background:rgba(184,134,11,.12); border:1px dashed var(--gold-deep); border-radius:8px; padding:10px 14px; }
+  .copybar .cb-txt { font-size:13.5px; color:#4a3a20; }
+  .btn-unlock { padding:9px 16px; font-family:Georgia,serif; font-size:13.5px; font-weight:bold; cursor:pointer;
+    border-radius:6px; border:2px solid var(--olive); background:transparent; color:#3a6b30; transition:all .2s; }
+  .btn-unlock:hover { background:rgba(79,124,62,.14); }
+  .btn-unlock.doneit { background:var(--olive); color:#f4ead4; cursor:default; }
+  .qs-locked { display:none; }
+  .lockmsg { text-align:center; color:#7c6440; font-size:13.5px; font-style:italic; padding:14px;
+    border:1px dashed #cbb37f; border-radius:8px; margin-top:12px; }
+
+  .qcount { color:#8a6f44; font-size:12.5px; letter-spacing:1px; text-transform:uppercase; margin-bottom:4px; }
+  .qtext { font-size:16.5px; color:#33270f; margin-bottom:12px; }
+  .qtext .lat { color:var(--terra); font-style:italic; font-weight:bold; }
+  .opts { display:flex; flex-direction:column; gap:9px; }
+  .opt { text-align:left; padding:11px 15px; font-family:Georgia,serif; font-size:15px;
+    background:#efe3c6; color:#33270f; border:2px solid var(--edge); border-radius:7px; cursor:pointer; transition:all .15s; }
+  .opt:hover:not(.locked) { border-color:var(--gold-deep); background:#f5ecd3; box-shadow:0 0 10px rgba(184,134,11,.25); }
+  .opt.correct { border-color:var(--olive); background:rgba(79,124,62,.22); }
+  .opt.wrong { border-color:var(--terra-soft); background:rgba(162,66,48,.16); }
+  .opt.locked { cursor:default; }
+  .fb { margin-top:11px; padding:11px 14px; border-radius:7px; font-size:14px; display:none; color:#3a2c18; }
+  .fb.show { display:block; }
+  .fb.good { background:rgba(79,124,62,.16); border-left:4px solid var(--olive); }
+  .fb.bad { background:rgba(162,66,48,.14); border-left:4px solid var(--terra-soft); }
+  .fb b { color:var(--terra); }
+
+  .gloss { font-size:13.5px; color:#4a3a20; background:rgba(184,134,11,.09); border:1px solid rgba(184,134,11,.35);
+    border-radius:7px; padding:8px 12px; margin:6px 0 8px; line-height:1.6; }
+  .gloss b { color:#7a3b1e; font-style:italic; font-weight:bold; }
+  .wtext { width:100%; min-height:64px; margin:4px 0; padding:9px 11px; font-family:Georgia,serif;
+    font-size:15px; background:#f8f1de; color:var(--ink); border:2px solid var(--edge); border-radius:7px; resize:vertical; }
+  .wtext:focus { outline:none; border-color:var(--gold-deep); box-shadow:0 0 8px rgba(184,134,11,.3); }
+  .btnrow { display:flex; flex-wrap:wrap; gap:10px; margin-top:12px; align-items:center; }
+  .btn { padding:8px 16px; font-family:Georgia,serif; font-size:13.5px; font-weight:bold; cursor:pointer; border-radius:6px; transition:all .2s; }
+  .btn-gold { background:linear-gradient(135deg,#caa04a,#9a6b1e); color:#241806; border:none; }
+  .btn-gold:hover { box-shadow:0 0 14px rgba(242,205,110,.6); }
+  .btn-ghost { background:#31281a; color:#f1e3c5; border:2px solid #c69a3c; }
+  .btn-ghost:hover { background:#413418; }
+  .model-box { margin-top:12px; padding:12px 15px; border-radius:7px; background:rgba(120,70,20,.10);
+    border-left:4px solid var(--gold-deep); font-size:15px; display:none; color:#3a2c18; }
+  .model-box.show { display:block; }
+  .model-box b { color:var(--terra); }
+  .selfmark { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+  .sm { padding:7px 13px; font-family:Georgia,serif; font-size:13.5px; font-weight:bold; cursor:pointer;
+    border-radius:6px; border:2px solid; background:transparent; }
+  .sm.nailed { border-color:var(--olive); color:#3a6b30; }
+  .sm.close { border-color:var(--gold-deep); color:#8a5a14; }
+  .sm.notyet { border-color:var(--terra-soft); color:#8a3222; }
+  .sm.chosen { background:rgba(0,0,0,.06); }
+
+  .instance { border-top:1px solid rgba(120,90,50,.3); padding-top:16px; margin-top:16px; }
+  .instance:first-child { border-top:none; padding-top:0; margin-top:0; }
+
+  .board { width:100%; border-collapse:collapse; margin-top:12px; font-size:14px; }
+  .board th, .board td { border:1px solid var(--edge); padding:8px 10px; text-align:left; }
+  .board th { background:rgba(184,134,11,.16); color:#7a4a12; }
+  .board td.n { color:var(--ink); font-weight:bold; }
+  .big-score { font-size:40px; color:var(--gold-deep); text-align:center; margin:6px 0; }
+  .cta { text-align:center; color:#7c6440; font-size:13.5px; }
+
+
+  /* ===== scaffolded translation ===== */
+  .latin { font-size:16.5px; line-height:1.9; color:#33270f; background:#fbf5e3; border:1px solid #cbb37f; border-left:5px solid var(--terra); border-radius:8px; padding:10px 14px; }
+  .lw { position:relative; cursor:pointer; font-style:italic; color:#7a3b1e; border-bottom:1px dotted #b8860b; padding:0 1px; }
+  .lw:hover { background:rgba(184,134,11,.14); }
+  .glosspop { position:absolute; left:0; top:1.5em; z-index:20; min-width:200px; max-width:320px; background:#2b2012; color:#f6e8c4; font-style:normal; font-size:13px; line-height:1.45; padding:8px 11px; border-radius:7px; box-shadow:0 8px 24px rgba(0,0,0,.45); white-space:normal; }
+  .glosspop b { color:#f2cd6e; font-style:italic; }
+  details.vocab { margin:8px 0 4px; } details.vocab summary { cursor:pointer; color:#7c6440; font-size:13px; font-style:italic; }
+  .step { margin-top:14px; padding:12px 14px; border:1px solid var(--edge); border-radius:9px; background:rgba(255,255,255,.35); transition:opacity .3s; }
+  .step.locked { opacity:.42; pointer-events:none; filter:grayscale(.4); }
+  .step.locked .stephead::after { content:" — locked until the step above is done"; font-weight:normal; font-size:12px; color:#8a6f44; }
+  .stephead { font-weight:bold; color:var(--terra); font-size:15px; margin-bottom:4px; }
+  .stepno { display:inline-block; width:22px; height:22px; line-height:22px; text-align:center; border-radius:50%; background:var(--terra); color:#f6eed6; font-size:12.5px; margin-right:6px; }
+  .stepq { font-size:14px; color:#4a3a20; margin-bottom:8px; }
+  .chips { display:flex; flex-wrap:wrap; gap:6px; }
+  .chip { font-family:Georgia,serif; font-style:italic; font-size:15px; padding:5px 11px; background:#efe3c6; color:#33270f; border:2px solid var(--edge); border-radius:7px; cursor:pointer; }
+  .chip:hover:not(.locked) { border-color:var(--gold-deep); background:#f5ecd3; }
+  .chip.none { font-style:normal; font-size:13px; background:rgba(184,134,11,.12); border-style:dashed; }
+  .chip.correct { border-color:var(--olive); background:rgba(79,124,62,.25); }
+  .chip.wrong { border-color:var(--terra-soft); background:rgba(162,66,48,.18); }
+  .chip.locked { cursor:default; }
+  .phrase { margin-top:10px; padding-top:8px; border-top:1px dashed rgba(120,90,50,.3); }
+  .phlat { font-style:italic; color:#7a3b1e; font-weight:bold; font-size:15.5px; margin-bottom:6px; }
+  .phrase .opt { padding:8px 12px; font-size:14px; }
+  .tiles { display:flex; flex-wrap:wrap; gap:7px; margin:6px 0 8px; }
+  .tile { font-family:Georgia,serif; font-size:14px; padding:7px 12px; background:#f8f1de; color:#33270f; border:2px solid var(--gold-deep); border-radius:7px; cursor:pointer; }
+  .tile:hover:not(.used):not(.locked) { background:#f2cd6e; }
+  .tile.used { opacity:.35; cursor:default; border-style:dashed; }
+  .tile.locked { cursor:default; }
+  .seq { min-height:38px; padding:8px 10px; background:rgba(184,134,11,.09); border:1px dashed var(--gold-deep); border-radius:7px; font-size:14px; line-height:1.9; }
+  .seqitem { display:inline-block; margin:2px 4px 2px 0; padding:2px 9px; background:#fff8e6; border:1px solid var(--edge); border-radius:6px; }
+  .seqitem b { color:var(--terra); margin-right:4px; }
+  .stepmeter { margin-left:10px; }
+  .dot { display:inline-block; width:10px; height:10px; border-radius:50%; background:#d9c9a3; margin-right:3px; vertical-align:middle; }
+  .dot.on { background:var(--olive); }
+
+  /* ===== six-step translation (same engine as Heroes L2) ===== */
+  .w { cursor:pointer; border-radius:3px; padding:0 1px; }
+  .w:hover { background:rgba(184,134,11,.22); }
+  .w.sel { background:var(--gold-deep); color:#fff8e6; }
+  .w.spent { cursor:default; opacity:.72; }
+  .w.spent:hover { background:none; }
+  .wp { padding:0 1px; }
+  .textblock .wp { font-style:italic; }
+  .textblock .w { font-style:italic; }
+  nav.stabs { display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 10px; position:sticky; top:0; z-index:5; padding:6px 0; background:linear-gradient(180deg,#f3ead0 70%,rgba(243,234,208,0)); }
+  nav.stabs button { font-family:Georgia,serif; font-size:14px; min-width:36px; border:2px solid var(--terra); background:#fbf5e3; color:var(--terra); border-radius:20px; padding:4px 11px; cursor:pointer; font-weight:bold; }
+  nav.stabs button.on { background:var(--terra); color:#fbf5e3; }
+  nav.stabs button.done { border-color:var(--olive); color:var(--olive); }
+  nav.stabs button.done.on { background:var(--olive); color:#fbf5e3; }
+  .shead { margin:6px 0 8px!important; color:var(--terra)!important; }
+  .latin { font-size:18px; line-height:1.9; font-style:italic; }
+  .cstep { background:rgba(255,255,255,.4); border:1px solid var(--edge); border-radius:9px; margin:14px 0; overflow:hidden; }
+  .cstep>.sh { background:var(--terra); color:#fbf1d8; padding:8px 13px; font-weight:bold; font-size:15px; }
+  .cstep>.sb { padding:8px 14px 12px; }
+  .q { border-bottom:1px dashed rgba(120,90,50,.35); padding:10px 0; }
+  .q:last-child { border-bottom:none; }
+  .qp { font-weight:bold; color:#3a2c18; margin-bottom:7px; font-size:15px; }
+  .topts { display:flex; flex-wrap:wrap; gap:6px; }
+  .tapw { font-family:Georgia,serif; font-size:15px; padding:5px 11px; background:#efe3c6; color:#33270f; border:2px solid var(--edge); border-radius:7px; cursor:pointer; }
+  .tapw:hover { border-color:var(--gold-deep); background:#f5ecd3; }
+  .tapw.mc { text-align:left; }
+  .tapw.right { border-color:var(--olive)!important; background:rgba(79,124,62,.25)!important; color:#24461c; }
+  .tapw.wrong { border-color:var(--terra-soft)!important; background:rgba(162,66,48,.2)!important; }
+  .fb.info { background:rgba(184,134,11,.12); border-left:4px solid var(--gold-deep); }
+  .btnrow.tight { margin-top:6px; }
+  .btn.sm2 { padding:3px 10px; font-size:12.5px; }
+  .btn[disabled] { opacity:.4; cursor:default; }
+  .chunk { display:grid; gap:6px; padding:10px 0; border-bottom:1px dashed rgba(120,90,50,.35); }
+  .chunk:last-child { border-bottom:none; }
+  .cl { font-weight:bold; color:#7a3b1e; font-style:italic; font-size:16px; }
+  .chunk input { width:100%; font-family:Georgia,serif; font-size:15px; padding:7px 10px; background:#f8f1de; color:var(--ink); border:2px solid var(--edge); border-radius:7px; }
+  .chunk input:focus { outline:none; border-color:var(--gold-deep); }
+  .cmodel { display:none; background:rgba(79,124,62,.14); border-left:4px solid var(--olive); padding:7px 12px; border-radius:5px; color:#24461c; }
+  .cmodel.show { display:block; }
+  .selfm { display:none; gap:8px; flex-wrap:wrap; align-items:center; margin-top:6px; }
+  .selfm.show { display:flex; }
+  .build { min-height:44px; border:2px dashed var(--gold-deep); border-radius:7px; padding:8px 10px; margin:8px 0; background:#fbf5e3; color:#33270f; }
+  .model-box.warn { background:rgba(162,66,48,.14); border-left-color:var(--terra-soft); }
+  .navbtns { display:flex; justify-content:space-between; gap:10px; margin:16px 0 4px; }
+  .allbox { margin-top:22px; padding-top:12px; border-top:2px solid rgba(184,134,11,.45); }
+  .allbox h3 { margin-top:0!important; }
+  .allta { min-height:150px; }
+  #pop { position:fixed; left:0; right:0; bottom:0; background:#2b2012; color:#f6e8c4; border-top:4px solid var(--gold); padding:12px 16px; display:none; z-index:50; box-shadow:0 -8px 24px rgba(0,0,0,.45); }
+  #pop .in { max-width:920px; margin:0 auto; position:relative; padding-right:30px; }
+  #pop .pw { font-size:21px; font-weight:bold; color:var(--gold); font-style:italic; }
+  #pop .pl { font-style:italic; color:#e7d3a3; }
+  #pop .pm { font-size:17px; margin-top:2px; }
+  #pop .pg { font-size:14px; color:#d8c49a; margin-top:4px; }
+  #pop .pn { font-size:12.5px; color:#f0c766; margin-top:6px; font-weight:bold; }
+  #pop .x { position:absolute; right:0; top:0; background:none; border:none; color:#f6e8c4; font-size:24px; cursor:pointer; }
+  body { padding-bottom:170px; }
+  @media (max-width:600px){ body{ padding:12px 10px 190px; } .card{ padding:16px 14px; } .logo{ font-size:32px; letter-spacing:5px; } }
+  footer { text-align:center; color:#e0c493; font-size:12px; margin:26px 0 8px; text-shadow:0 1px 3px rgba(0,0,0,.6); }
+
+  @media (prefers-reduced-motion: reduce){
+    .mote{ animation:none; opacity:.3; }
+    .scene::before{ animation:none; }
+    .panel.active{ animation:none; }
+  }
+  @media print {
+    #pop,nav.stabs,.navbtns,.allbox{ display:none!important; }
+    body{ background:#fff; color:#000; }
+    .scene,.motes,.tabs,.btnrow,.tablebar,.copybar,footer{ display:none!important; }
+    .panel{ display:block!important; } .qs-locked{ display:block!important; }
+    .card{ background:#fff; box-shadow:none; border-color:#999; }
+    .bookpage{ box-shadow:none; }
+    .model-box{ display:block!important; }
+  }
+  /* ===== Year 8 additions ===== */
+  .tyrow { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+  .tyin { flex:1 1 220px; max-width:340px; font-family:Georgia,serif; font-size:16px; font-style:italic; padding:9px 12px; background:#f8f1de; color:var(--ink); border:2px solid var(--edge); border-radius:7px; }
+  .tyin:focus { outline:none; border-color:var(--gold-deep); }
+  .tyin.ok { border-color:var(--olive); background:rgba(79,124,62,.18); }
+  .tyin.no { border-color:var(--terra-soft); background:rgba(162,66,48,.12); text-decoration:line-through; }
+  .ctx { font-size:13.5px; color:#6a4620; font-weight:bold; margin:2px 0 4px; letter-spacing:.3px; }
+  .latin { font-size:22px; letter-spacing:.2px; }
+  .w.rv { background:rgba(184,134,11,.30); box-shadow:inset 0 -3px 0 var(--gold-deep); }
+  .w.rs { background:rgba(79,124,62,.25); box-shadow:inset 0 -3px 0 var(--olive); }
+  .w.ro { background:rgba(162,66,48,.20); box-shadow:inset 0 -3px 0 var(--terra-soft); }
+  .w.rx { background:rgba(63,95,150,.20); box-shadow:inset 0 -3px 0 #3f5f96; }
+  .w.sel, .w.sel.rv, .w.sel.rs, .w.sel.rx, .w.sel.ro { background:var(--gold-deep); color:#fff8e6; box-shadow:none; }
+  .key span { display:inline-block; font-style:normal; font-size:12px; padding:0 7px; border-radius:4px; margin-left:4px; color:#2b2012; }
+  .key .kv { background:rgba(184,134,11,.30); } .key .ks { background:rgba(79,124,62,.25); } .key .ko { background:rgba(162,66,48,.20); } .key .kx { background:rgba(63,95,150,.20); }
+  .step .topts { margin-top:4px; }
+  .tapw { font-style:italic; font-size:17px; }
+  .tapw.mc, .tapw.none { font-style:normal; font-size:14px; }
+  .tapw.none { border-style:dashed; background:rgba(184,134,11,.12); }
+  .tapw:disabled { cursor:default; opacity:.75; }
+  .tapw.right:disabled { opacity:1; }
+  .sofar { background:#fbf5e3; border:1px solid #cbb37f; border-radius:8px; padding:10px 14px; font-size:15px; line-height:1.7; color:#2e2312; }
+  .textblock .tl { display:block; }
+  .textblock .tctx { font-size:12px; color:#8a6f44; font-style:normal; margin-right:6px; }
+  .model-box.warn { display:block; }
+  @media print { .step.locked{ opacity:1; filter:none; } }
+  /* ===== XP EXTENSION MODULE v1: styles (scoped to #xpBody / #xpRules so they work in any lesson template) ===== */
+  #xpBody, #xpRules { --xp-ink:#33270f; --xp-edge:#cdb98c; --xp-gold:#b8860b; --xp-red:#8f3320; --xp-green:#4f7c3e; }
+  #xpBody .instance { border-top:1px solid rgba(120,90,50,.3); padding-top:16px; margin-top:16px; }
+  #xpBody .instance:first-of-type { border-top:none; }
+  #xpBody .qcount { color:#8a6f44; font-size:12.5px; letter-spacing:1px; text-transform:uppercase; margin-bottom:4px; }
+  #xpBody .qtext { font-size:16.5px; color:var(--xp-ink); margin-bottom:12px; }
+  #xpBody .qtext .lat { color:var(--xp-red); font-style:italic; font-weight:bold; font-size:inherit; letter-spacing:0; text-shadow:none; }
+  #xpBody .opts { display:flex; flex-direction:column; gap:9px; }
+  #xpBody .opt { text-align:left; padding:11px 15px; font-family:Georgia,serif; font-size:15px; background:#efe3c6; color:var(--xp-ink); border:2px solid var(--xp-edge); border-radius:7px; cursor:pointer; }
+  #xpBody .opt:hover:not([disabled]) { border-color:var(--xp-gold); background:#f5ecd3; }
+  #xpBody .opt[disabled] { cursor:default; }
+  #xpBody .opt.correct { border-color:var(--xp-green); background:rgba(79,124,62,.22); }
+  #xpBody .opt.wrong { border-color:#a24230; background:rgba(162,66,48,.16); }
+  #xpBody .fb { margin-top:11px; padding:11px 14px; border-radius:7px; font-size:14px; display:block; color:#3a2c18; }
+  #xpBody .fb.good { background:rgba(79,124,62,.16); border-left:4px solid var(--xp-green); }
+  #xpBody .fb.bad { background:rgba(162,66,48,.14); border-left:4px solid #a24230; }
+  #xpBody .fb b { color:var(--xp-red); }
+  #xpBody .tyrow { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+  #xpBody .tyin { flex:1 1 220px; max-width:360px; font-family:Georgia,serif; font-size:16px; font-style:italic; padding:9px 12px; background:#f8f1de; color:var(--xp-ink); border:2px solid var(--xp-edge); border-radius:7px; }
+  #xpBody .tyin:focus { outline:none; border-color:var(--xp-gold); }
+  #xpBody .tyin.ok { border-color:var(--xp-green); background:rgba(79,124,62,.18); }
+  #xpBody .tyin.no { border-color:#a24230; background:rgba(162,66,48,.12); text-decoration:line-through; }
+  #xpBody .btn { padding:8px 16px; font-family:Georgia,serif; font-size:13.5px; font-weight:bold; cursor:pointer; border-radius:6px; background:linear-gradient(135deg,#caa04a,#9a6b1e); color:#241806; border:none; }
+  #xpBody .note, #xpRules .note { color:#7c6440; font-size:13px; font-style:italic; }
+  #xpBody .lockmsg { text-align:center; color:#7c6440; font-size:13.5px; font-style:italic; padding:14px; border:1px dashed #cbb37f; border-radius:8px; margin-top:12px; }
+  #xpRules table { width:100%; border-collapse:collapse; margin:10px 0 4px; font-size:13.5px; }
+  #xpRules th, #xpRules td { border:1px solid var(--xp-edge); padding:6px 9px; text-align:left; vertical-align:top; color:var(--xp-ink); }
+  #xpRules th { background:rgba(184,134,11,.16); color:#7a4a12; }
+  #xpRules td.rl { background:rgba(120,90,40,.14); font-weight:bold; white-space:nowrap; }
+  .xpbar { background:#2b2012; color:#f6e8c4; border-radius:10px; padding:12px 16px; margin:10px 0 14px; }
+  .xptop { display:flex; align-items:baseline; gap:10px; }
+  .xptop .note { color:#d8c49a; }
+  .xpnum { font-size:28px; font-weight:bold; color:#f2cd6e; }
+  .xptrack { position:relative; height:14px; background:#4a3a24; border-radius:7px; margin-top:8px; }
+  .xptrack i { position:absolute; left:0; top:0; bottom:0; background:linear-gradient(90deg,#caa04a,#f2cd6e); border-radius:7px; }
+  .xptrack .xpmark { position:absolute; top:-4px; width:3px; height:22px; background:#f6e8c4; border-radius:2px; }
+  .rewards { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:10px; margin-bottom:14px; }
+  .reward { border:2px dashed var(--xp-edge); border-radius:9px; padding:9px 12px; font-size:14px; color:#4a3a20; background:rgba(255,255,255,.3); }
+  .reward .rw-h { font-weight:bold; color:var(--xp-red); margin-bottom:2px; }
+  .reward.got { border-style:solid; border-color:var(--xp-green); background:rgba(79,124,62,.16); }
+  .reward.got .rw-h { color:#2f5a25; }
+  .pass { text-align:center; border:3px solid var(--xp-green); border-radius:12px; padding:14px; margin:4px 0 18px; background:rgba(79,124,62,.14); }
+  .pass-k { font-size:12.5px; letter-spacing:2px; text-transform:uppercase; color:#2f5a25; }
+  .pass-h { font-size:26px; font-weight:bold; color:#24461c; }
+  .pass-n { font-size:15px; color:var(--xp-ink); }
+  .lvl { border:2px solid var(--xp-gold); border-radius:11px; padding:14px 16px; margin:16px 0; background:rgba(255,255,255,.28); }
+  .lvl.locked { opacity:.75; border-style:dashed; }
+  .lvl.fin { border-color:var(--xp-green); }
+  .lvl-h { display:flex; justify-content:space-between; gap:10px; font-size:18px; font-weight:bold; color:var(--xp-red); margin-bottom:4px; }
+  .lvl-h i { font-weight:normal; color:#7c6440; font-size:14px; }
+  .lvl-x { color:#7a4a12; font-size:15px; white-space:nowrap; }
+  .lvl-done { background:rgba(79,124,62,.16); border-left:4px solid var(--xp-green); padding:8px 12px; border-radius:6px; margin:6px 0 4px; color:#24461c; font-weight:bold; }
+  /* ===== end XP module styles ===== */
+  .model-box .lat, .fb .lat { color:#8f3320; font-style:italic; font-size:inherit; letter-spacing:0; text-shadow:none; margin:0; }
+
+</style>
+</head>
+<body>
+<!-- ===================== BACKDROP: the villa on the hill (same household as Lesson 1) ===================== -->
+<div class="scene" aria-hidden="true">
+  <svg class="skyline" viewBox="0 0 1200 360" preserveAspectRatio="xMidYMax slice">
+    <path d="M0,210 L140,160 L260,185 L380,140 L520,170 L660,120 L800,150 L940,110 L1080,145 L1200,125 L1200,360 L0,360 Z" fill="#1b1a24" opacity="0.9"/>
+    <!-- the villa: long roof, colonnade, a tower -->
+    <g fill="#0f0e15">
+      <path d="M610,118 L760,84 L910,118 Z"/>
+      <rect x="622" y="118" width="276" height="10"/>
+      <rect x="632" y="128" width="9" height="46"/><rect x="668" y="128" width="9" height="46"/><rect x="704" y="128" width="9" height="46"/><rect x="740" y="128" width="9" height="46"/><rect x="776" y="128" width="9" height="46"/><rect x="812" y="128" width="9" height="46"/><rect x="848" y="128" width="9" height="46"/><rect x="882" y="128" width="9" height="46"/>
+      <rect x="616" y="174" width="288" height="10"/>
+      <rect x="930" y="96" width="46" height="88"/><path d="M924,96 L953,74 L982,96 Z"/>
+    </g>
+    <rect x="944" y="116" width="10" height="14" fill="#ffc46a" opacity="0.9"/>
+    <rect x="690" y="140" width="8" height="12" fill="#ffc46a" opacity="0.55"/>
+    <!-- cypress trees -->
+    <g fill="#0c0f12">
+      <path d="M540,190 C528,150 536,110 546,84 C556,110 564,150 552,190 Z"/>
+      <path d="M580,192 C570,160 576,130 584,108 C592,130 598,160 588,192 Z"/>
+      <path d="M1020,188 C1008,150 1016,112 1026,88 C1036,112 1044,150 1032,188 Z"/>
+    </g>
+    <!-- near slope with the road the messenger runs down -->
+    <path d="M0,260 C200,225 420,240 640,222 C860,205 1040,228 1200,212 L1200,360 L0,360 Z" fill="#14110f"/>
+    <path d="M760,186 C740,230 640,270 520,360 L600,360 C690,280 770,236 782,186 Z" fill="#3a2d20" opacity="0.8"/>
+  </svg>
+</div>
+<div class="motes" aria-hidden="true">
+  <span class="mote" style="left:8%; width:5px; height:5px; animation-duration:19s; animation-delay:0s;"></span>
+  <span class="mote" style="left:22%; width:3px; height:3px; animation-duration:26s; animation-delay:5s;"></span>
+  <span class="mote" style="left:37%; width:6px; height:6px; animation-duration:22s; animation-delay:9s;"></span>
+  <span class="mote" style="left:55%; width:4px; height:4px; animation-duration:25s; animation-delay:3s;"></span>
+  <span class="mote" style="left:71%; width:6px; height:6px; animation-duration:20s; animation-delay:11s;"></span>
+  <span class="mote" style="left:88%; width:4px; height:4px; animation-duration:24s; animation-delay:6s;"></span>
+</div>
+
+<div class="wrap">
+  <header>
+    <div class="logo">TO THE ISLAND</div>
+    <div class="lat">ad insulam</div>
+    <div class="sub">Year 8 Latin &middot; Chapter 1, Lesson 5 &middot; <b>reading a whole story</b></div>
+    <div class="spec">No new grammar: who is doing it, which slot a noun sits in, and the end of the Davus and Syrus story</div>
+  </header>
+
+  <div class="tablebar">
+    <span id="whoami" class="note" style="color:#e2cb92">Not signed in yet</span>
+    <span class="scorepill">Score: <span id="scoreNow">0</span> / <span id="scoreMax">0</span></span>
+    <span id="savestatus" class="note"></span>
+    <button class="btn btn-ghost" onclick="signOut()">Switch user</button>
+    <button class="btn btn-ghost" onclick="resetAll()">Start again</button>
+  </div>
+
+  <div class="tabs" id="tabs"></div>
+
+  <!-- START -->
+  <div class="panel active" id="p-start">
+    <div class="card">
+      <h2>Reading the whole story</h2>
+      <p>This is the last lesson of Chapter 1, and there is <b>no new grammar</b>. You use everything you have learned to read a story. The story is in <b>two parts</b>, and before each part there is a short practice section.</p>
+      <p>Last lesson the same four mistakes kept coming up, so today&rsquo;s practice is about them:</p>
+      <ul style="margin:0 0 12px 22px;line-height:1.6">
+        <li>reading a word ending <i>-am, -um, -as, -os</i> as the subject, when it comes first in the sentence;</li>
+        <li>putting an <i>-as</i> or <i>-os</i> word after a part of <i>sum</i>;</li>
+        <li>calling the noun after a preposition the object;</li>
+        <li>forgetting one or many after a preposition: <i>per hortos</i> is through the garden<b>s</b>.</li>
+      </ul>
+      <h3>How it works</h3>
+      <p>The same as last lesson. There are <b>two short boxes to copy</b> into your exercise book, in sections 2 and 4. Copy the box, tick <b>&ldquo;I have copied these notes&rdquo;</b>, and the questions unlock. In the quick questions your <b>first answer is the one that counts</b>.</p>
+      <p>In the story you work <b>one sentence at a time</b>, with the same six steps as last lesson:</p>
+      <table class="gram">
+        <tr><th>Step</th><th>What you do</th><th>What to watch for today</th></tr>
+        <tr><td class="rl">1 Verb</td><td>Tap the verb</td><td>Some sentences have two. <span class="lat-word">est</span> and <span class="lat-word">sunt</span> are verbs.</td></tr>
+        <tr><td class="rl">2 Who?</td><td>Read the verb&rsquo;s ending</td><td><i>-t</i> he/she/it, <i>-mus</i> we, <i>-tis</i> you, <i>-nt</i> they</td></tr>
+        <tr><td class="rl">3 Subject</td><td>Tap the nominative</td><td>An <i>-am, -um, -as, -os</i> word is <b>never</b> the subject, even when it comes first</td></tr>
+        <tr><td class="rl">4 Phrase</td><td>Tap the preposition and its noun</td><td>Two sentences have no preposition: use the button</td></tr>
+        <tr><td class="rl">5 Object</td><td>Tap the accusative that is left</td><td>the object is the accusative <b>outside</b> the phrase</td></tr>
+        <tr><td class="rl">6 Translate</td><td>Write the English</td><td>No subject word? It is the last person named</td></tr>
+      </table>
+      <p><b>Do not know a word?</b> Tap it in the Latin sentence and its meaning appears at the bottom of the screen. You get <b>one look</b> at each word in a sentence, so read the meaning carefully before you close it.</p>
+      <h3>The five sections</h3>
+      <p>
+        <span class="pill">1 &middot; Last lesson</span>
+        <span class="pill">2 &middot; Who is doing it?</span>
+        <span class="pill">3 &middot; Story part 1: on the island</span>
+        <span class="pill">4 &middot; Three slots</span>
+        <span class="pill">5 &middot; Story part 2: the letter again</span>
+      </p>
+      <h3>&#9733; Extension</h3>
+      <p>When you have finished all five sections, the <b>Extension</b> opens. It has three levels, and each one is harder than the last. The computer marks everything. You earn <b>XP</b> for every right answer: more for getting it right first time.</p>
+      <div id="xpRules"></div>
+      <p class="note">The main lesson comes first. The extension does not change your lesson score.</p>
+      <div class="btnrow"><button class="btn btn-gold" onclick="go('recall')">Begin &rarr;</button></div>
+    </div>
+  </div>
+
+  <!-- 1 RECALL -->
+  <div class="panel" id="p-recall"><div class="card">
+    <h2>1 &middot; Last lesson</h2>
+    <p>Nothing to copy here. These are the questions the class found hardest last lesson. Answer from memory, and read the feedback if you get one wrong.</p>
+    <table class="gram">
+      <tr><th></th><th>like <i>puella</i></th><th>like <i>servus</i></th></tr>
+      <tr><td class="rl">subject, one / many</td><td><i>puell<b>a</b></i> / <i>puell<b>ae</b></i></td><td><i>serv<b>us</b></i> / <i>serv<b>i</b></i></td></tr>
+      <tr><td class="rl">object, one / many</td><td><i>puell<b>am</b></i> / <i>puell<b>as</b></i></td><td><i>serv<b>um</b></i> / <i>serv<b>os</b></i></td></tr>
+    </table>
+    <p class="note"><i>ad, in, per, circum, contra</i> are followed by the accusative. A part of <i>sum</i> is followed by the nominative.</p>
+    <div id="recallNote"></div>
+    <h3>Quick check: four to click</h3><div id="recallBody"></div>
+    <h3 style="margin-top:26px">Three to type</h3><p class="note">One go at each, so check your spelling and whether it is one or many before you press Check.</p><div id="recalltyBody"></div>
+    <div class="btnrow"><button class="btn btn-gold" onclick="go('who')">Next: who is doing it? &rarr;</button></div>
+  </div></div>
+
+  <!-- 2 WHO IS DOING IT? -->
+  <div class="panel" id="p-who"><div class="card">
+    <h2>2 &middot; Who is doing it?</h2>
+    <p>Latin can put any word first. Last lesson, when a sentence began with an accusative, many of you made that word the subject. <i>epistulam ad dominum portat</i> came out as &ldquo;the letter is carried to the master&rdquo; or &ldquo;the master carries the letter&rdquo;. It means <b>&ldquo;he carries the letter to the master&rdquo;</b>.</p>
+    <p><b>Rule 1. The subject is always nominative.</b> Look for <i>-a</i> or <i>-us</i> (one), <i>-ae</i> or <i>-i</i> (more than one). A word ending <i>-am, -um, -as</i> or <i>-os</i> is never the subject, wherever it stands. In <i>servos dominus vocat</i>, <i>dominus</i> is the subject: the master calls the slaves.</p>
+    <p><b>Rule 2. No nominative? The subject is inside the verb.</b> The ending tells you which person: <i>-t</i> he, she or it; <i>-mus</i> we; <i>-tis</i> you; <i>-nt</i> they. And <i>portat</i> always means &ldquo;he carries&rdquo;. It never means &ldquo;is carried&rdquo;: someone is doing the carrying.</p>
+    <p><b>Rule 3. In a story, the subject stays the same until a new one is named.</b> Your textbook gives this rule for joined-up Latin. <i>nuntius ad villam ambulat. epistulam portat.</i> The second sentence has no nominative, so the messenger is still the subject: &ldquo;The messenger walks to the house. <b>He</b> carries a letter.&rdquo;</p>
+    <h3>Copy this box</h3>
+    <div class="bookpage">
+      <span class="bp-date">[today&rsquo;s date]</span>
+      <span class="bp-title">Who is doing it?</span><br>
+      1. The subject is nominative: <i>-a, -us</i> (one), <i>-ae, -i</i> (more than one).<br>
+      2. A word ending <i>-am, -um, -as, -os</i> is <b>never</b> the subject.<br>
+      3. No nominative? The verb ending gives the subject. In a story it is the last person named.<br>
+      <i>servos dominus vocat.</i> The master calls the slaves.
+    </div>
+    <div class="copybar"><span class="cb-txt">Copied the box?</span>
+      <button class="btn-unlock" id="unlock_who" onclick="tickNotes('who')">&#10003; I have copied these notes</button></div>
+    <div class="lockmsg" id="lock_who">The questions unlock when you have copied the box into your exercise book.</div>
+    <div class="qs-locked" id="qs_who">
+      <h3>Who is doing it?</h3><p class="note">Find the nominative first. If there is none, read the verb ending, then look back at the sentence before.</p><div id="whodoBody"></div>
+      <h3 style="margin-top:26px">Pick the translation</h3><p class="note">Every sentence starts with the object. The wrong answers are real mistakes.</p><div id="whotrBody"></div>
+      <div class="btnrow"><button class="btn btn-gold" onclick="go('st1')">Next: the story, part 1 &rarr;</button></div>
+    </div>
+  </div></div>
+
+  <!-- 3 STORY PART 1 -->
+  <div class="panel" id="p-st1"><div class="card">
+    <h2>3 &middot; Story part 1: on the island</h2>
+    <p><b>The story so far.</b> A messenger brought the master a letter, and the household got ready to sail to Rome. Davus and Syrus took the money but did not go to the horses. A slave-girl ran to the master: &ldquo;Davus and Syrus are not friends; they are carrying the money to the island!&rdquo; The master shouted and called his slaves against them.</p>
+    <p>A slave who ran away with his master&rsquo;s money was in serious trouble: masters could hire slave-catchers, and a runaway who was caught could be beaten, branded or sold. Read part 1 aloud once, then work through it one sentence at a time.</p>
+    <div class="textblock" id="st1_text"></div>
+    <table class="gram">
+      <tr><th colspan="2">The Beaz Method: the steps you will follow for each sentence</th></tr>
+      <tr><td class="rl">1 Verb</td><td>usually last. Two verbs? They will be joined by <i>et</i> or <i>sed</i>, or split by a comma or semicolon.</td></tr>
+      <tr><td class="rl">2 Who?</td><td>the verb&rsquo;s ending. Two subjects joined by <i>et</i> = they.</td></tr>
+      <tr><td class="rl">3 Subject</td><td>nominative only. None? It is inside the verb, and it is the last person named.</td></tr>
+      <tr><td class="rl">4 Phrase</td><td>the preposition and the noun after it: one chunk.</td></tr>
+      <tr><td class="rl">5 Object</td><td>the accusative left outside the phrase, with a doing verb.</td></tr>
+      <tr><td class="rl">6 Translate</td><td>subject, verb, object, then the phrase.</td></tr>
+    </table>
+    <p class="note">Four sentences. Use the numbered buttons to move between them.</p><div id="st1Body"></div>
+    <div class="btnrow"><button class="btn btn-gold" onclick="go('slots')">Next: three slots &rarr;</button></div>
+  </div></div>
+
+  <!-- 4 THREE SLOTS -->
+  <div class="panel" id="p-slots"><div class="card">
+    <h2>4 &middot; Three slots</h2>
+    <p>Last lesson sixteen of you got <i>feminae ______ sunt</i> (&ldquo;the women are goddesses&rdquo;) wrong: <i>deas</i>, <i>dea</i> and <i>deam</i> all appeared, and only <i>deae</i> is right. After a week of <i>-as</i> and <i>-os</i> following prepositions, the accusative crept into places where it does not belong. Before you choose an ending, decide which <b>slot</b> the noun is in.</p>
+    <table class="gram">
+      <tr><th>Slot</th><th>Case</th><th>Example</th></tr>
+      <tr><td class="rl">the object of a doing verb</td><td>accusative: <i>-am, -um, -as, -os</i></td><td><i>puella <b>deas</b> vocat.</i> The girl calls the goddesses.</td></tr>
+      <tr><td class="rl">after a preposition</td><td>accusative, but <b>not</b> the object</td><td><i>puella ad <b>deas</b> ambulat.</i> The girl walks towards the goddesses.</td></tr>
+      <tr><td class="rl">with a part of <i>sum</i></td><td>nominative: <i>-a, -us, -ae, -i</i>, matching the subject in number</td><td><i>feminae <b>deae</b> sunt.</i> The women are goddesses.</td></tr>
+    </table>
+    <p>A part of <i>sum</i> never has an object, and it is never followed by <i>-am, -um, -as</i> or <i>-os</i>. Use the = test: the women = goddesses, so both words are nominative.</p>
+    <h3>Copy this box</h3>
+    <div class="bookpage">
+      <span class="bp-date">[today&rsquo;s date]</span>
+      <span class="bp-title">Three slots for a noun</span><br>
+      <table>
+        <tr><td>object of a doing verb</td><td>accusative</td><td><i>deas vocat</i></td></tr>
+        <tr><td>after a preposition</td><td>accusative, not the object</td><td><i>ad deas</i></td></tr>
+        <tr><td>with <i>sum</i></td><td>nominative, same number as the subject</td><td><i>deae sunt</i></td></tr>
+      </table>
+    </div>
+    <div class="copybar"><span class="cb-txt">Copied the box?</span>
+      <button class="btn-unlock" id="unlock_slots" onclick="tickNotes('slots')">&#10003; I have copied these notes</button></div>
+    <div class="lockmsg" id="lock_slots">The questions unlock when you have copied the box into your exercise book.</div>
+    <div class="qs-locked" id="qs_slots">
+      <h3>Type the noun for the slot</h3><p class="note">Decide the slot first, then whether it is one or many. One go at each.</p><div id="slotBody"></div>
+      <h3 style="margin-top:26px">Which one is the object?</h3><p class="note">A noun after a preposition is not the object, and a part of <i>sum</i> has no object.</p><div id="objqBody"></div>
+      <div class="btnrow"><button class="btn btn-gold" onclick="go('st2')">Next: the story, part 2 &rarr;</button></div>
+    </div>
+  </div></div>
+
+  <!-- 5 STORY PART 2 -->
+  <div class="panel" id="p-st2"><div class="card">
+    <h2>5 &middot; Story part 2: the letter again</h2>
+    <p>The slaves have found Davus and Syrus, and they are carrying swords. Davus speaks first. Read part 2 aloud once, then work through it one sentence at a time. Remember rule 3: if a sentence has no nominative, the subject is the last person named.</p>
+    <div class="textblock" id="st2_text"></div>
+    <p class="note">Four sentences. Use the numbered buttons to move between them.</p><div id="st2Body"></div>
+    <div class="btnrow"><button class="btn btn-gold" onclick="go('board')">Finish: scoreboard &rarr;</button></div>
+  </div></div>
+
+  <!-- SCOREBOARD -->
+  <div class="panel" id="p-board">
+    <div class="card">
+      <h2>Scoreboard</h2>
+      <div class="big-score"><span id="boardNow">0</span> / <span id="boardMax">0</span></div>
+      <div class="cta" id="boardMsg">Work through the tabs to build your score.</div>
+      <table class="board" id="boardTable"></table>
+      <div id="ragBox" style="margin-top:18px;">
+        <h3 style="color:#6a4620;font-size:16px;margin-bottom:8px;">How confident are you at reading a Chapter 1 story now?</h3>
+        <div class="selfmark">
+          <button class="sm nailed" onclick="setRag('green')">Green &ndash; confident</button>
+          <button class="sm close" onclick="setRag('amber')">Amber &ndash; getting there</button>
+          <button class="sm notyet" onclick="setRag('red')">Red &ndash; need more help</button>
+        </div>
+        <p class="note" style="margin-top:6px;">This tells Mr Beasley how you feel, not just how you scored.</p>
+      </div>
+      <div class="bookpage" style="margin-top:18px">
+        <span class="bp-title">Last thing in your book</span><br>
+        Under today&rsquo;s notes, write this sentence and translate it: <i>servos femina in hortum vocat.</i> Underline the subject, put a bracket round the phrase and circle the object. Check and correct in green.
+      </div>
+      <p class="note" style="margin-top:12px;">Your work saves automatically to the class store. That is the end of Chapter 1: next comes the Chapter 1 review and test.</p>
+      <div class="btnrow"><button class="btn btn-gold" onclick="go('ext')">&#9733; Extension: earn XP &rarr;</button></div>
+    </div>
+  </div>
+
+  <!-- EXTENSION -->
+  <div class="panel" id="p-ext"><div class="card">
+    <h2>&#9733; Extension</h2>
+    <p>Three levels. Each one opens when you have finished the one before with at least half its XP. The computer marks every answer, and you get two tries at each question: full XP first time, less on the second try.</p>
+    <div id="xpBody"></div>
+    <div class="btnrow"><button class="btn btn-ghost" onclick="go('board')">&larr; Scoreboard</button></div>
+  </div></div>
+
+  <div id="pop"><div class="in"><button class="x" onclick="hidePop()" aria-label="Close">&times;</button><div class="pw" id="pw"></div><div class="pl" id="pl"></div><div class="pm" id="pm"></div><div class="pg" id="pg"></div><div class="pn">One look only: once you close this, you cannot look this word up again in this sentence.</div></div></div>
+  <footer>TO THE ISLAND &middot; Year 8 Latin 2026&ndash;27 &middot; Latin to GCSE Chapter 1 (Topic 14, Ex 1.26) &middot; Chapter 1 consolidation: connected reading &middot; JPC version &middot; no macrons, as in the Eduqas papers</footer>
+</div>
+
+<script>
+/* ======================= LESSON DATA =======================
+   Ch1 Lesson 5, JPC version (1 Nov 2026), cloned from the JFJ version of 11 Oct 2026. Latin to GCSE Ch 1 Topic 14 (mixed revision) and Ex 1.26 (connected
+   translation: "unless a new subject is introduced, assume the subject is the same as before"). No new grammar.
+   Changed for JPC from their L4 data (13 Oct 2026, 30 pupils): the noun after a preposition taken as the object
+   (hortum 17/29, dominum 8/29); accusative or singular after sum (feminae ___ sunt wrong 16/29: deas 6, dea 3, deam 2);
+   object-first sentence misread ("the letter is carried", "the master carries the letter", 15/30 missed the subject
+   step); est nuntius 13/30 ("the messenger is" 8); AND a JPC-specific one: one or many after a preposition
+   (per hortos -> hortum 13/30, in villas -> villam 8/29, circum insulas -> insulam 5). Recall typed item 2 is now
+   "into the houses"; the start page carries a fourth bullet; the Three Slots lead-in quotes JPC's numbers.
+   Two story parts, with a drill before each.
+   No macrons (Eduqas). Vocabulary: Chapter 1 only.
+   Word entry: [as printed, dictionary form, meaning here, neutral grammar (shown on tap), role (shown once found / on a wrong tap)] */
+
+const CLASS_LOCK="JPC";  /* class copy: pupils in JPC only */
+const PERSONS = ["I","you (one person)","he / she / it","we","you (more than one)","they"];
+
+/* ---------- 1 · RECALL: Lesson 4's weakest questions ---------- */
+const RECALL_NOTE = "";
+const RECALL = [
+  {q:"<span class='lat'>puella per hortum ambulat.</span> &nbsp; Which word is the object?", opts:["hortum","puella","there is no object"], a:2, why:"Walking is not done to anything. hortum belongs to per: through the garden. It is accusative because of per, not because it is an object. Last lesson seventeen of you picked hortum here."},
+  {q:"The women are goddesses. &nbsp; <span class='lat'>feminae ______ sunt.</span>", opts:["deas","deae","deam","dea"], a:1, why:"After sunt the complement is nominative, and plural to match feminae: deae. -as is accusative, and an accusative never goes with sum. Last lesson sixteen of you got this wrong: deas, dea and deam were all tried."},
+  {q:"<span class='lat'>epistulam ad dominum portat.</span>", opts:["The letter is carried to the master.","The master carries the letter.","He carries the letter to the master."], a:2, why:"portat = he carries. Someone is doing the carrying, and there is no nominative, so it is 'he'. epistulam (-am) is the object, so it cannot be the subject. dominum belongs to ad. Last lesson half the class made the letter or the master the subject here."},
+  {q:"<span class='lat'>est nuntius.</span>", opts:["He is a messenger.","There is a messenger.","The messenger is."], a:1, why:"est comes first, so say 'there is'. Last lesson thirteen of you wrote 'the messenger is' or 'he is a messenger'."}
+];
+const RECALLTY = [
+  {q:"through the garden<b>s</b> &nbsp; <span class='lat'>per ______</span> &nbsp; <span class='note'>(hortus &middot; more than one)</span>", a:["hortos"]},
+  {q:"into the houses &nbsp; <span class='lat'>in ______</span> &nbsp; <span class='note'>(villa)</span>", a:["villas"]},
+  {q:"Davus and Syrus are <b>friends</b>. &nbsp; <span class='lat'>Davus et Syrus ______ sunt.</span>", a:["amici"]}
+];
+
+/* ---------- 2 · WHO IS DOING IT? ---------- */
+const WHODO = [
+  {q:"<span class='lat'>servos dominus vocat.</span> &nbsp; Who is calling?", opts:["the slaves","the master","we"], a:1, why:"dominus (-us) is nominative: the subject. servos (-os) is the object. It comes first, but that does not make it the subject."},
+  {q:"<span class='lat'>contra deos non pugnamus.</span> &nbsp; Who is not fighting?", opts:["the gods","they","we"], a:2, why:"-mus = we. deos (-os) belongs to contra: against the gods."},
+  {q:"<span class='lat'>Davum et Syrum salutant.</span> &nbsp; Who is greeting?", opts:["Davus and Syrus","they: people not named in this sentence","he"], a:1, why:"Davum and Syrum end -um: they are the ones being greeted. There is no nominative, so the subject is inside salutant: -nt = they."},
+  {q:"<span class='lat'>puella in villam ambulat. ancillam vocat.</span> &nbsp; Who calls the slave-girl?", opts:["the slave-girl","the girl","the house"], a:1, why:"The second sentence has no nominative, so the subject is the last person named: the girl. ancillam (-am) is the object."},
+  {q:"<span class='lat'>servi ad villam ambulant. dominum salutant.</span> &nbsp; Who greets the master?", opts:["the master","the slaves","we"], a:1, why:"No nominative in the second sentence, and -nt = they: still the slaves. dominum (-um) is the object."},
+  {q:"<span class='lat'>dominus clamat. servos in hortum vocat.</span> &nbsp; Who is calling?", opts:["the slaves","the master","the garden"], a:1, why:"No nominative in the second sentence, so it is still the master. servos (-os) is the object; hortum belongs to in."}
+];
+const WHOTR = [
+  {q:"<span class='lat'>puellas femina vocat.</span>", opts:["The girls call the woman.","The woman calls the girls.","The woman calls the girl."], a:1, why:"femina (-a) is the subject. puellas (-as) is the object, more than one girl."},
+  {q:"<span class='lat'>gladios servi portant.</span>", opts:["The slaves carry the swords.","The swords carry the slaves.","The slave carries the swords."], a:0, why:"servi (-i) is the subject and portant is plural. gladios (-os) is the object."},
+  {q:"<span class='lat'>dominum amici salutant.</span>", opts:["The master greets the friends.","The friend greets the master.","The friends greet the master."], a:2, why:"amici (-i) is the subject, more than one, and salutant is plural. dominum (-um) is the object."},
+  {q:"<span class='lat'>ancilla in hortum ambulat; puellas vocat.</span>", opts:["The slave-girl walks into the garden; the girls call.","The slave-girl walks into the garden; she calls the girls.","The slave-girl walks in the garden; the girls call her."], a:1, why:"The second half has no nominative, so the slave-girl is still the subject: she calls. puellas (-as) is the object. in + accusative = into."}
+];
+
+/* ---------- 4 · THREE SLOTS ---------- */
+const SLOT = [
+  {q:"The women are <b>goddesses</b>. &nbsp; <span class='lat'>feminae ______ sunt.</span> &nbsp; <span class='note'>(dea)</span>", a:["deae"]},
+  {q:"The girl calls <b>the goddesses</b>. &nbsp; <span class='lat'>puella ______ vocat.</span> &nbsp; <span class='note'>(dea)</span>", a:["deas"]},
+  {q:"The girl walks towards <b>the goddesses</b>. &nbsp; <span class='lat'>puella ad ______ ambulat.</span> &nbsp; <span class='note'>(dea)</span>", a:["deas"]},
+  {q:"We are <b>slaves</b>. &nbsp; <span class='lat'>______ sumus.</span> &nbsp; <span class='note'>(servus)</span>", a:["servi"]},
+  {q:"The slaves walk around <b>the garden</b>. &nbsp; <span class='lat'>servi circum ______ ambulant.</span> &nbsp; <span class='note'>(hortus)</span>", a:["hortum"]},
+  {q:"Davus and Syrus are <b>messengers</b>. &nbsp; <span class='lat'>Davus et Syrus ______ sunt.</span> &nbsp; <span class='note'>(nuntius)</span>", a:["nuntii"]}
+];
+const OBJQ = [
+  {q:"<span class='lat'>servi per villam ambulant.</span> &nbsp; Which word is the object?", opts:["villam","servi","there is no object"], a:2, why:"Walking is not done to anything. villam belongs to per: through the house."},
+  {q:"<span class='lat'>amici sunt; cibum parant.</span> &nbsp; Which word is the object?", opts:["amici","cibum","there is no object"], a:1, why:"amici goes with sunt: the complement. parant is a doing verb: prepare what? The food, cibum."},
+  {q:"<span class='lat'>puellae deae sunt.</span> &nbsp; Which word is the object?", opts:["deae","puellae","there is no object"], a:2, why:"sunt is a part of sum, so there is no object. deae is the complement: nominative plural, matching puellae."},
+  {q:"<span class='lat'>dominus servos in villam vocat.</span> &nbsp; Which word is the object?", opts:["villam","servos","there is no object"], a:1, why:"Calls whom? The slaves: servos. villam belongs to in: into the house."}
+];
+
+/* ---------- 3 and 5 · THE STORY (two parts of 4 sentences) ---------- */
+function N(form,dict,mean,end,role){ return [form,dict,mean,"noun · ending "+end,role]; }
+function P(form,mean){ return [form,form+" (+ accusative)",mean,"preposition",R.P]; }
+function PA(prep,phrase){ return "accusative after "+prep+": part of the phrase '"+phrase+"'. It belongs to "+prep+", so it is not the object"; }
+const R = {
+  S:"nominative singular: the subject, the one doing it",
+  SP:"nominative plural: the subject, more than one of them doing it",
+  O:"accusative singular: the object, the one it is done to. A word ending -am or -um is never the subject",
+  OP:"accusative plural: the object, more than one of them. A word ending -as or -os is never the subject",
+  C:"nominative: the complement. It comes with a part of sum and says what the subject IS (the = test). It is not an object",
+  P:"a preposition. It is not a verb, subject or object: it goes with the accusative noun after it to make a phrase",
+  small:"a small word that never changes its ending: not a verb, not a subject, not an object"
+};
+const SUMHINT = "Not quite. There is a part of sum here. Say them in order: sum, es, est, sumus, estis, sunt = I am, you are, he/she/it is, we are, you (more than one) are, they are. Try again.";
+const SM = (w,m,g,r)=>[w,"sum (irregular)",m,"verb · part of sum",r];
+const STORY = {
+st1:[
+ {lat:"dominus et servi ad insulam navigant.",
+  w:[N("dominus","dominus","the master","-us",R.S),["et","et","and","small word",R.small],N("servi","servus","the slaves","-i",R.SP),P("ad","to, towards"),N("insulam","insula","the island","-am",PA("ad","to the island")),["navigant.","navigo (1st engine)","sail, are sailing","verb · ending -ant","the verb: -nt = they"]],
+  verb:[5], who:5, subj:[0,2], phr:[3,4], obj:[],
+  ev:"navigant: last word, ending -nt.", ew:"-nt = they: the master and the slaves together.", es:"dominus and servi: two nominatives joined by et, so the verb is plural.", ex:"ad insulam: to the island.", eo:"No object. insulam is accusative, but it belongs to ad. Sailing is not done to anything.",
+  model:"The master and the slaves sail to the island.",
+  acc:["(the|) master and (the|his) slaves (sail|are sailing|go|are going|travel|are travelling|traveling) (to|towards) (the|) island"]},
+ {lat:"in insulam ambulant; Davum et Syrum vocant.",
+  w:[P("in","into, onto"),N("insulam","insula","the island","-am",PA("in","onto the island")),["ambulant;","ambulo (1st engine)","walk, are walking","verb · ending -ant","a verb: -nt = they"],N("Davum","Davus","Davus","-um",R.O+". Here it is the person being called"),["et","et","and","small word",R.small],N("Syrum","Syrus","Syrus","-um",R.O+". Here it is the person being called"),["vocant.","voco (1st engine)","call, are calling","verb · ending -ant","a verb: -nt = they"]],
+  verb:[2,6], who:5, subj:[], phr:[0,1], obj:[3,5],
+  ev:"Two verbs: ambulant and vocant, split by the semicolon.", ew:"-nt = they, for both. No new subject has been named, so it is still the master and the slaves.", es:"No subject word: 'they' is inside the verbs. Davum and Syrum end -um, so they cannot be the subject.", ex:"in insulam: onto the island. in + accusative shows movement.", eo:"Davum and Syrum (-um): the objects of vocant. They call whom? Davus and Syrus.",
+  model:"They walk onto the island; they call Davus and Syrus.",
+  must:[{re:"\\bthey(re)?\\b", say:"<b>they</b>: <span class='lat'>-nt</span> = they, and no new subject has been named, so it is still the master and the slaves"},
+        {re:"\\b(call|calling|summon|summoning|shout for|shouting for|shout to|shouting to|call for|calling for|call out to|calling out to|call out for|calling out for) davus", say:"<b>call Davus and Syrus</b>: <span class='lat'>Davum</span> and <span class='lat'>Syrum</span> end -um, so they are being called, not calling"}],
+  acc:["they (walk|are walking|go|are going|step|are stepping) (onto|on to|into|on) the island (and|) they (call|are calling|call for|are calling for|shout for|are shouting for) davus and syrus","theyre (walking|going) (onto|on to|into|on) the island (and|) (theyre|they are) (calling|calling for|shouting for) davus and syrus","they (walk|are walking|go|are going) (onto|on to|into|on) the island and (call|are calling|call for|are calling for|shout for|are shouting for) davus and syrus"]},
+ {lat:"est villa; dominus servos in villam vocat.",
+  w:[SM("est;","is; first word of the sentence: there is","","a verb: est, and it comes first, so 'there is'"),N("villa","villa","a house","-a","nominative singular: the subject of est. There is a house"),N("dominus","dominus","the master","-us","nominative singular: the subject of vocat, the one doing the calling"),N("servos","servus","the slaves","-os",R.OP),P("in","into, onto"),N("villam","villa","the house","-am",PA("in","into the house")),["vocat.","voco (1st engine)","calls, is calling","verb · ending -at","a verb: -t = he / she / it"]],
+  verb:[0,6], who:2, subj:[1,2], phr:[4,5], obj:[3], sum:true,
+  ev:"Two verbs: est at the start, then vocat at the end.", ew:"-t = he / she / it, for both. est comes first, so say 'there is'.", es:"Two subjects, one for each verb. villa (-a) goes with est: there is a house. dominus (-us) goes with vocat. servos ends -os, so it cannot be the subject.", ex:"in villam: into the house.", eo:"servos (-os): the object. The master calls whom? The slaves. villam belongs to in.",
+  model:"There is a house; the master calls the slaves into the house.",
+  must:[{re:"\\bthere (is|was)\\b", say:"<b>there is</b>. <span class='lat'>est</span> comes first in the sentence"},
+        {re:"\\bmaster (calls|is calling|summons|is summoning|calls for|is calling for|orders|is ordering|tells|is telling)\\b", say:"<b>the master calls</b>: <span class='lat'>dominus</span> (-us) is the subject; <span class='lat'>servos</span> (-os) is the object, so the slaves are not the ones calling"}],
+  acc:["there is (a|the) (house|villa|country house) (and|) the master (calls|is calling|summons|is summoning|calls for|is calling for) (the|his) slaves (into|inside) the (house|villa|country house)"]},
+ {lat:"Davum et Syrum servi non salutant; gladios portant!",
+  w:[N("Davum","Davus","Davus","-um",R.O+". Here it is a person being greeted (or not)"),["et","et","and","small word",R.small],N("Syrum","Syrus","Syrus","-um",R.O+". Here it is a person being greeted (or not)"),N("servi","servus","the slaves","-i",R.SP),["non","non","not","small word",R.small],["salutant;","saluto (1st engine)","greet, are greeting","verb · ending -ant","a verb: -nt = they"],N("gladios","gladius","swords","-os",R.OP),["portant!","porto (1st engine)","carry, are carrying","verb · ending -ant","a verb: -nt = they"]],
+  verb:[5,7], who:5, subj:[3], phr:[], obj:[0,2,6],
+  ev:"Two verbs: salutant and portant, split by the semicolon.", ew:"-nt = they, for both: the slaves.", es:"servi (-i): nominative plural, the subject. It comes third, after the objects. Davum and Syrum end -um, so they cannot be the subject.", ex:"No preposition in this sentence.", eo:"Davum and Syrum (-um) are the objects of salutant; gladios (-os) is the object of portant.",
+  model:"The slaves do not greet Davus and Syrus; they are carrying swords!",
+  must:[{re:"\\bslaves (do not|dont|are not|arent|did not|didnt) (greet|greeting|welcome|welcoming|say hello to|salute|saluting)\\b", say:"<b>the slaves do not greet</b>: <span class='lat'>servi</span> (-i) is the subject; <span class='lat'>Davum</span> and <span class='lat'>Syrum</span> end -um, so they are the objects"}],
+  acc:["(the|) slaves (do not|dont|are not|arent) (greet|greeting|welcome|welcoming) davus and syrus (they|and they|but they|) (carry|are carrying|have|are holding|hold) (their|the|) swords"]}
+],
+st2:[
+ {ctx:"Davus, to the master:", lat:"amici sumus! cibum in villam portamus.",
+  w:[N("amici","amicus","friends","-i",R.C),SM("sumus!","we are","","a verb: sumus = we are"),N("cibum","cibus","food","-um",R.O),P("in","into, onto"),N("villam","villa","the house","-am",PA("in","into the house")),["portamus.","porto (1st engine)","we carry, we are carrying","verb · ending -amus","a verb: -mus = we"]],
+  verb:[1,5], who:3, subj:[], phr:[3,4], obj:[2], sum:true,
+  ev:"Two verbs: sumus and portamus.", ew:"-mus = we, for both. Davus is speaking for himself and Syrus.", es:"No subject word: 'we' is inside the verbs. amici is nominative, but it is the complement: it says what we are.", ex:"in villam: into the house.", eo:"cibum (-um): the object of portamus. amici is not an object: it goes with sumus.",
+  model:"We are friends! We are carrying food into the house.",
+  must:[{re:"\\b(we|were)\\b", say:"<b>we</b>. <span class='lat'>-mus</span> on <span class='lat'>sumus</span> and <span class='lat'>portamus</span> means we"},
+        {re:"\\bfriends\\b", say:"<b>friends</b>, plural. <span class='lat'>amici</span> goes with <span class='lat'>sumus</span> and matches 'we'"}],
+  acc:["(we are|were) (friends|your friends|friends of yours) (and|) (we|were|we are) (carrying|are carrying|carry|are taking|take|are bringing|bring|taking|bringing) (the|some|) food (into|inside) the (house|villa|country house)"]},
+ {lat:"est epistula; Davus epistulam ad dominum portat.",
+  w:[SM("est;","is; first word of the sentence: there is","","a verb: est, and it comes first, so 'there is'"),N("epistula","epistula","a letter","-a","nominative singular: the subject of est. There is a letter"),N("Davus","Davus","Davus","-us","nominative singular: the subject of portat, the one doing the carrying"),N("epistulam","epistula","the letter","-am",R.O),P("ad","to, towards"),N("dominum","dominus","the master","-um",PA("ad","to the master")),["portat.","porto (1st engine)","carries, is carrying","verb · ending -at","a verb: -t = he / she / it"]],
+  verb:[0,6], who:2, subj:[1,2], phr:[4,5], obj:[3], sum:true,
+  ev:"Two verbs: est at the start, then portat at the end.", ew:"-t = he / she / it, for both. est comes first, so say 'there is'.", es:"Two subjects, one for each verb. epistula (-a) goes with est: there is a letter. Davus (-us) goes with portat. Look at the same word twice: epistula is nominative, epistulam is accusative.", ex:"ad dominum: to the master.", eo:"epistulam (-am): the object. Davus carries what? The letter. dominum belongs to ad.",
+  model:"There is a letter; Davus carries the letter to the master.",
+  must:[{re:"\\bthere (is|was)\\b", say:"<b>there is</b>. <span class='lat'>est</span> comes first in the sentence"}],
+  acc:["there is (a|the) letter (and|) davus (carries|is carrying|takes|is taking|brings|is bringing|gives|is giving|hands|is handing) (the|it|) (letter|) to the master"]},
+ {ctx:"The master reads the letter. It is his own: last month he sent Davus and Syrus ahead with money for food, to get the villa on the island ready. Then he forgot.", lat:"nunc dominus non clamat; Davum et Syrum salutat.",
+  w:[["nunc","nunc","now","small word",R.small],N("dominus","dominus","the master","-us",R.S),["non","non","not","small word",R.small],["clamat;","clamo (1st engine)","shouts, is shouting","verb · ending -at","a verb: -t = he / she / it"],N("Davum","Davus","Davus","-um",R.O+". Here it is a person being greeted"),["et","et","and","small word",R.small],N("Syrum","Syrus","Syrus","-um",R.O+". Here it is a person being greeted"),["salutat.","saluto (1st engine)","greets, is greeting","verb · ending -at","a verb: -t = he / she / it"]],
+  verb:[3,7], who:2, subj:[1], phr:[], obj:[4,6],
+  ev:"Two verbs: clamat and salutat, split by the semicolon.", ew:"-t = he / she / it, for both. No new subject in the second half, so it is still the master.", es:"dominus (-us): nominative, the subject of both verbs.", ex:"No preposition in this sentence.", eo:"Davum and Syrum (-um): the objects. He greets whom? Davus and Syrus.",
+  model:"Now the master does not shout; he greets Davus and Syrus.",
+  must:[{re:"\\b(greets|is greeting|greeted|welcomes|is welcoming|says hello to|salutes|is saluting|greet|welcome) davus", say:"<b>greets Davus and Syrus</b>: <span class='lat'>Davum</span> and <span class='lat'>Syrum</span> end -um, so they are the objects, and the master is still the subject"}],
+  acc:["now (the|) master (does not shout|doesnt shout|is not shouting|isnt shouting) (he|and he|but he|) (greets|is greeting|welcomes|is welcoming) davus and syrus","(the|) master (does not shout|doesnt shout|is not shouting|isnt shouting) now (he|and he|but he|) (greets|is greeting|welcomes|is welcoming) davus and syrus"]},
+ {ctx:"And the slave-girl who told the story about the money?", lat:"ancillam dominus ad Romam non portat!",
+  w:[N("ancillam","ancilla","the slave-girl","-am",R.O),N("dominus","dominus","the master","-us",R.S),P("ad","to, towards"),N("Romam","Roma","Rome","-am",PA("ad","to Rome")),["non","non","not","small word",R.small],["portat!","porto (1st engine)","carries, takes","verb · ending -at","the verb: -t = he / she / it"]],
+  verb:[5], who:2, subj:[1], phr:[2,3], obj:[0],
+  ev:"portat: last word, ending -t.", ew:"-t = he / she / it: the master.", es:"dominus (-us): nominative, the subject. ancillam comes first, but it ends -am, so it cannot be the subject.", ex:"ad Romam: to Rome.", eo:"ancillam (-am): the object. The master takes whom? The slave-girl. Romam belongs to ad.",
+  model:"The master does not take the slave-girl to Rome!",
+  must:[{re:"\\bmaster (does not|doesnt|is not|isnt|will not|wont) (take|taking|carry|carrying|bring|bringing)\\b", say:"<b>the master does not take</b>: <span class='lat'>dominus</span> (-us) is the subject; <span class='lat'>ancillam</span> (-am) is the object"}],
+  acc:["(the|) master (does not take|doesnt take|is not taking|isnt taking|does not carry|doesnt carry|is not carrying|isnt carrying|does not bring|doesnt bring|is not bringing|isnt bringing) the (slave girl|slave woman|slavegirl|maid) to rome"]}
+]};
+
+const SOLO = [];
+
+/* ======================= EXTENSION: XP LEVELS ======================= */
+const XP_CONFIG = {
+  teacher:'Mr Beasley',
+  placeholder:'Type the Latin…',
+  unlockPct:50,
+  rewards:[
+    {key:'valet', xp:170, name:'Laptop valet', text:'Someone else puts your laptop away for you.'},
+    {key:'fast',  xp:320, name:'Fast pass',    text:'You do not wait at the end of the lesson: put your laptop away first.'}
+  ],
+  challenge:{ upTo:'II', need:10, reward:'Mr Beasley puts the laptops away' },
+  levels:[
+ {id:'I', name:'Level I', rank:'Tiro', rankEn:'recruit', type:'ty', xp:[10,4],
+  blurb:'Type the missing Latin word. First decide the slot: object, phrase, or with sum?',
+  items:[
+   {q:"The slaves are <b>friends</b>. &nbsp; <span class='lat'>servi ______ sunt.</span>", a:["amici"]},
+   {q:"The master calls <b>the friends</b>. &nbsp; <span class='lat'>dominus ______ vocat.</span>", a:["amicos"]},
+   {q:"We walk to <b>the friends</b>. &nbsp; <span class='lat'>ad ______ ambulamus.</span>", a:["amicos"]},
+   {q:"The women are <b>slave-girls</b>. &nbsp; <span class='lat'>feminae ______ sunt.</span>", a:["ancillae"]},
+   {q:"The girl greets <b>the slave-girls</b>. &nbsp; <span class='lat'>puella ______ salutat.</span>", a:["ancillas"]},
+   {q:"They sail around <b>the island</b>. &nbsp; <span class='lat'>circum ______ navigant.</span>", a:["insulam"]},
+   {q:"<b>We are</b> messengers. &nbsp; <span class='lat'>nuntii ______.</span>", a:["sumus"]},
+   {q:"The slave carries the food into <b>the gardens</b>. &nbsp; <span class='lat'>servus cibum in ______ portat.</span>", a:["hortos"]},
+   {q:"Syrus is a <b>messenger</b>. &nbsp; <span class='lat'>Syrus ______ est.</span>", a:["nuntius"]},
+   {q:"The master <b>greets</b> the slaves. &nbsp; <span class='lat'>dominus servos ______.</span>", a:["salutat"]}
+  ]},
+ {id:'II', name:'Level II', rank:'Miles', rankEn:'soldier', type:'mc', xp:[15,6],
+  blurb:'Pick the right translation. The wrong answers are real mistakes: check who is doing the verb before anything else.',
+  items:[
+   {q:"<span class='lat'>servos dominus non amat.</span>", opts:["The slaves do not love the master.","The master does not love the slaves.","The master does not love the slave.","The slave does not love the masters."], a:1, why:"dominus (-us) is the subject; servos (-os) is the object, more than one. non = not."},
+   {q:"<span class='lat'>nuntius ad villam ambulat; epistulam portat.</span>", opts:["The messenger walks to the house; the letter is carrying.","The messenger walks to the house; the house carries a letter.","The messenger walks to the house; he carries a letter.","The messenger walks into the house; he carries letters."], a:2, why:"No new nominative in the second half, so the messenger is still the subject: he carries. epistulam (-am) is one letter, the object. ad = to."},
+   {q:"<span class='lat'>amici estis; cibum paratis.</span>", opts:["The friends prepare the food.","You (more than one) are friends; you prepare food.","They are friends; they prepare food.","We are friends; we prepare food."], a:1, why:"estis and paratis both end -tis = you (more than one). amici is the complement."},
+   {q:"<span class='lat'>puellam deae vocant.</span>", opts:["The girl calls the goddesses.","The goddess calls the girls.","The goddesses call the girl.","The girl calls the goddess."], a:2, why:"deae (-ae) is nominative plural and vocant is plural: the goddesses are calling. puellam (-am) is the object."},
+   {q:"<span class='lat'>sunt servi; per hortum ambulant.</span>", opts:["There are slaves; they walk through the garden.","The slaves are walking around the garden.","They are slaves; they walk through the gardens.","There is a slave; he walks through the garden."], a:0, why:"sunt first = there are. ambulant: they, still the slaves. per = through; hortum is one garden."},
+   {q:"<span class='lat'>Davus et Syrus nuntii sunt; ad dominum navigant.</span>", opts:["Davus and Syrus sail the messengers to the master.","Davus is a messenger; Syrus sails to the master.","Davus and Syrus are messengers; we sail to the master.","Davus and Syrus are messengers; they sail to the master."], a:3, why:"nuntii is the complement of sunt. navigant (-nt) = they: still Davus and Syrus. dominum belongs to ad."},
+   {q:"<span class='lat'>feminas contra deos vocamus.</span>", opts:["We call the women against the gods.","The women call us against the gods.","We call the gods against the women.","The women call the gods against us."], a:0, why:"-mus = we. feminas (-as) is the object; deos belongs to contra."},
+   {q:"<span class='lat'>dominus servum non salutat, sed servus dominum salutat.</span>", opts:["The slave does not greet the master, but the master greets the slave.","The master does not greet the slaves, but the slaves greet the master.","The master and the slave do not greet each other.","The master does not greet the slave, but the slave greets the master."], a:3, why:"First half: dominus subject, servum object. Second half: servus subject, dominum object. All singular."}
+  ]},
+ {id:'III', name:'Level III', rank:'Centurio', rankEn:'centurion', type:'ty', anyOrder:true, xp:[25,10],
+  blurb:'English into Latin. Any word order is accepted, but every ending must be right. Subject nominative, object accusative, the noun after a preposition accusative, the noun with sum nominative.',
+  items:[
+   {q:"We are friends.", a:["amici sumus"]},
+   {q:"The master calls the slaves.", a:["dominus servos vocat"]},
+   {q:"The women are goddesses.", a:["feminae deae sunt"]},
+   {q:"The slaves greet the master.", a:["servi dominum salutant"]},
+   {q:"The master and the slaves sail to Rome.", a:["dominus et servi ad romam navigant"]},
+   {q:"There is a garden; the girls walk through the garden.", a:["est hortus puellae per hortum ambulant"]},
+   {q:"You (more than one) are messengers; you carry letters.", a:["nuntii estis epistulas portatis"]},
+   {q:"The slave-girl walks into the house and calls the girls.", a:["ancilla in villam ambulat et puellas vocat"]}
+  ]}
+]
+};
+/* How the XP module talks to this lesson's engine */
+const XP_HOOKS = {
+  coreDone: ()=>allDone(),
+  coreLeft: ()=>{ let left=0; SECS.forEach(k=>{ const p=tabProgress(k); left+=Math.max(0,p.total-p.done); }); return left; },
+  state:    ()=>state,
+  changed:  ()=>after(),
+  who:      ()=>IDENTITY?IDENTITY.cand:''
+};
+
+/* ======================= ENGINE ======================= */
+const TABS = [
+  {id:"start", label:"Start"},
+  {id:"recall", label:"1 Last lesson", scored:true},
+  {id:"who", label:"2 Who is doing it?", scored:true},
+  {id:"st1", label:"3 On the island", scored:true},
+  {id:"slots", label:"4 Three slots", scored:true},
+  {id:"st2", label:"5 The letter again", scored:true},
+  {id:"board", label:"Scoreboard"},
+  {id:"ext", label:"★ Extension", ext:true}
+];
+const SECS = ['recall','who','st1','slots','st2'];
+const SECNAME = { recall:"1 Last lesson", who:"2 Who is doing it?", st1:"3 On the island", slots:"4 Three slots", st2:"5 The letter again" };
+const BANKS = {
+  recall:[['recall',RECALL,'mc'],['recallty',RECALLTY,'ty']],
+  who:[['whodo',WHODO,'mc'],['whotr',WHOTR,'mc']],
+  slots:[['slot',SLOT,'ty'],['objq',OBJQ,'mc']]
+};
+const BANKDATA = {}; Object.values(BANKS).forEach(l=>l.forEach(b=>BANKDATA[b[0]]=b[1]));
+const SENT_PTS = 7;   /* verb 1 + who 1 + subject 1 + phrase 1 + object 1 + translation 2 */
+function secMax(sec){
+  let m=0; (BANKS[sec]||[]).forEach(b=>m+=b[1].length);
+  if(STORY[sec]) m+=STORY[sec].length*SENT_PTS;
+  if(sec==='solo') m+=SOLO.length*2;
+  return m;
+}
+
+/* ---------------- CLOUD (shared Vestigia store) ---------------- */
+const CLOUD = { endpoint:"https://vestigia-store.mrbeasley930.workers.dev", book:"ch1-reading-jpc" };
+const LESSON = { id:"L5", title:"To the Island: reading a whole story (JPC)" };
+const VTOKEN = "vp_8c7103b52959b06cb55526bf";
+let IDENTITY = null;
+function userKey(){ return IDENTITY ? (IDENTITY.cls+"::"+IDENTITY.cand) : "anon"; }
+function fullKey(){ return CLOUD.book+"::"+userKey(); }
+function timed(ms){ const c=new AbortController(); const t=setTimeout(()=>c.abort(),ms); return {signal:c.signal, done:()=>clearTimeout(t)}; }
+const CloudStore = {
+  async pull(){
+    if(!CLOUD.endpoint||!IDENTITY) return null;
+    const T=timed(7000);
+    try{ const r=await fetch(CLOUD.endpoint+"?key="+encodeURIComponent(fullKey()),{headers:{"x-vestigia-token":VTOKEN},method:"GET",signal:T.signal});
+      T.done(); if(!r.ok) return null; const j=await r.json(); return j&&j.data?j.data:null;
+    }catch(e){ T.done(); console.warn("cloud pull failed; this device only.",e); return null; }
+  },
+  async push(blob){
+    if(!CLOUD.endpoint||!IDENTITY) return false;
+    const T=timed(10000);
+    try{ const r=await fetch(CLOUD.endpoint,{method:"POST",signal:T.signal,headers:{"x-vestigia-token":VTOKEN,"Content-Type":"application/json"},
+        body:JSON.stringify({key:fullKey(),cls:IDENTITY.cls,cand:IDENTITY.cand,book:CLOUD.book,data:blob,savedAt:new Date().toISOString()})});
+      T.done(); return r.ok;
+    }catch(e){ T.done(); console.warn("cloud push failed; kept on this device.",e); return false; }
+  }
+};
+
+let state = {};
+const LS = "ch1_reading_jpc_v1_";
+function storeKey(){ return LS + (IDENTITY ? (IDENTITY.cls+"_"+IDENTITY.cand) : "default"); }
+function safeGet(k){ try { return localStorage.getItem(k); } catch(e){ return null; } }
+function safeSet(k,v){ try { localStorage.setItem(k,v); } catch(e){} }
+function save(){ safeSet(storeKey(), JSON.stringify(state)); mirrorToCloud(); }
+function after(){ save(); refreshScore(); renderTabs(); }
+
+/* ---------------- scoring ---------------- */
+function bankPts(bk){ const o=state.q||{}; let c=0,n=0; BANKDATA[bk].forEach((it,i)=>{ const r=o[bk+'_'+i]; if(r){ n++; c+=r.ok?1:0; } }); return {c,n}; }
+function sentRec(sec,i){ state.tr=state.tr||{}; return state.tr[sec+'_'+i]||(state.tr[sec+'_'+i]={}); }
+function sentPeek(sec,i){ return (state.tr&&state.tr[sec+'_'+i])||{}; }
+function sentPts(sec,i){ const r=sentPeek(sec,i); return (r.v||0)+(r.p||0)+(r.s||0)+(r.x||0)+(r.o||0)+(r.t||0); }
+function sentDone(sec,i){ const r=sentPeek(sec,i); return r.t!==undefined&&r.t!==null; }
+function soloPeek(i){ return (state.solo&&state.solo[i])||{}; }
+function tabPoints(sec){
+  let p=0; (BANKS[sec]||[]).forEach(b=>p+=bankPts(b[0]).c);
+  if(STORY[sec]) STORY[sec].forEach((s,i)=>p+=sentPts(sec,i));
+  if(sec==='solo') SOLO.forEach((s,i)=>p+=(soloPeek(i).mk||0));
+  return p;
+}
+function tabProgress(sec){
+  let done=0,total=0; (BANKS[sec]||[]).forEach(b=>{ done+=bankPts(b[0]).n; total+=b[1].length; });
+  if(STORY[sec]) STORY[sec].forEach((s,i)=>{ total++; if(sentDone(sec,i)) done++; });
+  if(sec==='solo') SOLO.forEach((s,i)=>{ total++; if(soloPeek(i).mk!==undefined) done++; });
+  return {done,total};
+}
+function totals(){ let c=0,t=0; SECS.forEach(k=>{ c+=tabPoints(k); t+=secMax(k); }); return {c,t}; }
+function allDone(){ return SECS.every(k=>{ const p=tabProgress(k); return p.done>=p.total; }); }
+function refreshScore(){ const tt=totals(); document.getElementById('scoreNow').textContent=tt.c; document.getElementById('scoreMax').textContent=tt.t; }
+
+/* summary blob for the class store. score / total / pct / done / sections{correct,total} is what the Ch1 Teacher Tracker reads;
+   detail[] carries every typed answer word for word; state lets a pupil resume on another machine. */
+function cloudSummary(){
+  const tt=totals(), sections={};
+  SECS.forEach(k=>{ sections[SECNAME[k]]={correct:tabPoints(k),total:secMax(k)}; });
+  const detail=[];
+  ['st1','st2'].forEach(sec=>STORY[sec].forEach((s,i)=>{ const r=sentPeek(sec,i);
+    detail.push({id:sec+'_'+i, s:SECNAME[sec], lat:s.lat, a:r.text||'', m:s.model, mk:(r.t===undefined?null:r.t), auto:!!r.auto,
+      verb:r.v, who:r.p, subj:r.s, phr:r.x, obj:r.o, lookups:r.look||0}); }));
+  SOLO.forEach((s,i)=>{ const r=soloPeek(i); detail.push({id:'solo_'+i, s:SECNAME.solo, lat:s.lat, a:r.text||'', m:s.model, mk:(r.mk===undefined?null:r.mk), auto:!!r.auto, lookups:r.look||0}); });
+  const typed=[]; Object.keys(BANKDATA).forEach(bk=>BANKDATA[bk].forEach((it,i)=>{ const r=(state.q||{})[bk+'_'+i]; if(!r) return;
+    if(r.v!==undefined) typed.push({id:bk+'_'+i, q:stripHtml(it.q), a:r.v, ok:!!r.ok, right:it.a[0]});
+    else if(r.pick!==undefined&&it.opts) typed.push({id:bk+'_'+i, q:stripHtml(it.q), a:stripHtml(it.opts[r.pick]), ok:!!r.ok, right:stripHtml(it.opts[it.a]), mc:true}); }));
+  return { name:(IDENTITY?IDENTITY.cand:''), lesson:LESSON.id, title:LESSON.title,
+    score:tt.c, total:tt.t, pct:(tt.t?Math.round(100*tt.c/tt.t):0), done:allDone(),
+    coreGot:tt.c, coreTot:tt.t, rag:(state.rag||''), notes:(state.notes||{}),
+    sections:sections, detail:detail, typed:typed, solo:[], ext:xpSummary(),
+    savedAt:new Date().toISOString(), state:state };
+}
+function stripHtml(s){ const d=document.createElement('div'); d.innerHTML=String(s||''); return (d.textContent||'').replace(/\s+/g,' ').trim(); }
+let _mirrorTimer=null;
+function mirrorToCloud(){
+  if(!IDENTITY) return;
+  setSync("saving"); clearTimeout(_mirrorTimer);
+  _mirrorTimer=setTimeout(async()=>{ const ok=await CloudStore.push(cloudSummary()); setSync(ok?"cloud":"offline"); },600);
+}
+function setSync(s){
+  try{ window.__vsBanner && window.__vsBanner(s); }catch(e){}
+  const el=document.getElementById('savestatus'); if(!el) return;
+  const map={ saving:["saving…","#e2cb92"], cloud:["✓ saved to class store","#8fd8a6"], offline:["saved on this device only","#f0c766"] };
+  const m=map[s]||map.offline; el.textContent=m[0]; el.style.color=m[1];
+}
+
+/* ---------------- gated notes ---------------- */
+function tickNotes(key){ state.notes=state.notes||{}; if(state.notes[key]) return; state.notes[key]=true; save(); applyNotes(key); }
+function applyNotes(key){
+  const qs=document.getElementById('qs_'+key); if(qs) qs.classList.remove('qs-locked');
+  const lk=document.getElementById('lock_'+key); if(lk) lk.style.display='none';
+  const b=document.getElementById('unlock_'+key); if(b){ b.classList.add('doneit'); b.textContent='✓ Notes copied — unlocked'; }
+}
+function restoreNotes(){ Object.keys(state.notes||{}).forEach(k=>{ if(state.notes[k]) applyNotes(k); }); }
+function setRag(v){ state.rag=v; paintRag(); save(); }
+function paintRag(){ document.querySelectorAll('#ragBox .sm').forEach(s=>s.classList.remove('chosen'));
+  if(state.rag){ const el=document.querySelector('#ragBox .sm.'+({green:'nailed',amber:'close',red:'notyet'}[state.rag])); if(el) el.classList.add('chosen'); } }
+
+/* ---------------- sign-in gate ---------------- */
+function showGate(){
+  const ov=document.createElement('div'); ov.id='rp-gate';
+  ov.style.cssText="position:fixed;inset:0;z-index:9999;background:rgba(8,8,14,.9);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:20px;font-family:Georgia,serif;";
+  const inp="width:100%;box-sizing:border-box;margin:5px 0 12px;padding:11px;border-radius:8px;border:1px solid #c9b686;background:#fbf6e6;color:#2b2012;font-size:15px;font-family:Georgia,serif;";
+  ov.innerHTML='<div style="max-width:440px;width:100%;background:linear-gradient(180deg,#f6eed6,#e6d6b4);border-top:6px solid #c69a3c;border-radius:14px;padding:26px 26px 22px;box-shadow:0 22px 60px rgba(0,0,0,.6);color:#2b2012;">'
+    +'<div style="font-size:12.5px;letter-spacing:2px;color:#8f3320;font-weight:700;">YEAR 8 LATIN · CHAPTER 1 · LESSON 5</div>'
+    +'<div style="font-size:23px;color:#7a2f1e;font-weight:800;margin:2px 0 3px;">To the Island</div>'
+    +'<div style="font-size:13px;color:#6b5636;margin-bottom:16px;font-style:italic;">Sign in so your work saves and Mr Beasley can see it.</div>'
+    +'<label style="font-size:13px;color:#7a2f1e;font-weight:700;">Class</label>'
+    +'<input id="g-cls" autocomplete="off" value="JPC" readonly tabindex="-1" title="This copy of the lesson is for JPC" style="cursor:not-allowed;opacity:.8;'+inp+'">'
+    +'<label style="font-size:13px;color:#7a2f1e;font-weight:700;">Your name (first name and surname)</label>'
+    +'<input id="g-cand" autocomplete="off" placeholder="e.g. Marcus Tullius" style="'+inp+'margin-bottom:4px;">'
+    +'<div id="g-err" style="color:#a12016;font-size:12.5px;min-height:17px;margin:3px 0 6px;"></div>'
+    +'<button id="g-go" style="width:100%;padding:12px;border:0;border-radius:8px;background:linear-gradient(135deg,#caa04a,#9a6b1e);color:#221806;font-weight:800;font-size:15px;cursor:pointer;font-family:Georgia,serif;">Start my work</button>'
+    +'<div style="font-size:11.5px;color:#8a7048;margin-top:13px;line-height:1.5;">Type your name the same way every lesson, so your work stays together.</div></div>';
+  document.body.appendChild(ov);
+  document.getElementById('g-go').addEventListener('click',signIn);
+  ov.addEventListener('keydown',function(e){ if(e.key==='Enter'){ e.preventDefault(); signIn(); } });
+  document.getElementById('g-cand').focus();
+}
+let _signing=false;
+async function signIn(){
+  if(_signing) return;
+  const cls=CLASS_LOCK;
+  const cand=(document.getElementById('g-cand').value||'').trim().replace(/\s+/g,' ');
+  const err=document.getElementById('g-err');
+  if(!cls){ err.textContent="Enter your class code."; return; }
+  if(!/^.{2,40}$/.test(cand)){ err.textContent="Please enter your name (2-40 characters)."; return; }
+  _signing=true; IDENTITY={cls:cls,cand:cand};
+  const go=document.getElementById('g-go'); if(go) go.textContent="Loading…";
+  const remote=await CloudStore.pull();
+  let local={}; try{ local=JSON.parse(safeGet(storeKey())||"{}"); }catch(e){ local={}; }
+  state=(remote&&remote.state&&typeof remote.state==='object')?remote.state:local;
+  const g=document.getElementById('rp-gate'); if(g) g.remove();
+  document.getElementById('whoami').innerHTML='Signed in: <b style="color:#f0c766">'+escH(IDENTITY.cls)+' · '+escH(IDENTITY.cand)+'</b>';
+  renderAll(); save();
+}
+function signOut(){ IDENTITY=null; location.reload(); }
+
+/* ---------------- tabs ---------------- */
+function renderTabs(){
+  const cur=(document.querySelector('.panel.active')||{id:'p-start'}).id.replace('p-','');
+  document.getElementById('tabs').innerHTML=TABS.map(t=>{ let done="";
+    if(t.scored){ const p=tabProgress(t.id); if(p.total&&p.done>=p.total) done=" <span class='done'>&#10003;</span>"; }
+    if(t.ext) done = allDone() ? " <span class='done'>"+xpTotals().xp+" XP</span>" : " &#128274;";
+    return `<button class="tab ${t.id===cur?'active':''}" data-tab="${t.id}" onclick="go('${t.id}')">${t.label}${done}</button>`; }).join("");
+}
+function go(id){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('p-'+id).classList.add('active');
+  hidePop(); renderTabs(); if(id==='board') renderBoard(); if(id==='ext') xpRender();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function escH(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+
+/* ---------------- choice and typed banks: one attempt each ---------------- */
+function normLat(s){ return String(s||'').toLowerCase().replace(/[^a-z\s]/g,' ').replace(/\s+/g,' ').trim(); }
+function sortWords(s){ return normLat(s).split(' ').sort().join(' '); }
+function renderBank(bk,type,containerId){
+  const bank=BANKDATA[bk], c=document.getElementById(containerId); if(!c) return;
+  c.innerHTML=bank.map((it,i)=>{
+    const head=`<div class="instance" id="${bk}_${i}"><div class="qcount">Question ${i+1} of ${bank.length}</div><div class="qtext">${it.q}</div>`;
+    if(type==='mc') return head+`<div class="opts">${it.opts.map((o,j)=>`<button class="opt" onclick="pickMC('${bk}',${i},${j})">${o}</button>`).join("")}</div><div class="fb" id="${bk}_fb_${i}"></div></div>`;
+    return head+`<div class="tyrow"><input type="text" class="tyin" id="${bk}_in_${i}" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Type the Latin…" onkeydown="if(event.key==='Enter'){event.preventDefault();checkTy('${bk}',${i});}"><button class="btn btn-gold" id="${bk}_btn_${i}" onclick="checkTy('${bk}',${i})">Check</button></div><div class="fb" id="${bk}_fb_${i}"></div></div>`;
+  }).join("");
+  bank.forEach((it,i)=>{ const r=(state.q||{})[bk+'_'+i]; if(r) paintBank(bk,type,i,r); });
+}
+function pickMC(bk,i,j){ state.q=state.q||{}; if(state.q[bk+'_'+i]) return;
+  const r={pick:j, ok:j===BANKDATA[bk][i].a}; state.q[bk+'_'+i]=r; paintBank(bk,'mc',i,r); after(); }
+function checkTy(bk,i){ state.q=state.q||{}; if(state.q[bk+'_'+i]) return;
+  const it=BANKDATA[bk][i], v=document.getElementById(`${bk}_in_${i}`).value; if(!v.trim()) return;
+  const ok = it.strictOrder||it.a[0].indexOf(' ')<0 ? it.a.map(normLat).includes(normLat(v)) : it.a.map(sortWords).includes(sortWords(v));
+  const r={v:v.trim(), ok:ok}; state.q[bk+'_'+i]=r; paintBank(bk,'ty',i,r); after(); }
+function paintBank(bk,type,i,r){
+  const it=BANKDATA[bk][i], fb=document.getElementById(`${bk}_fb_${i}`), box=document.getElementById(`${bk}_${i}`); if(!box) return;
+  if(type==='mc'){ const opts=box.querySelectorAll('.opt'); opts.forEach(o=>o.classList.add('locked'));
+    if(r.ok) opts[r.pick].classList.add('correct'); else { opts[r.pick].classList.add('wrong'); opts[it.a].classList.add('correct'); }
+    fb.className="fb show "+(r.ok?"good":"bad"); fb.innerHTML=(r.ok?"<b>Correct.</b> ":"<b>Not quite.</b> ")+(it.why||""); }
+  else { const inp=document.getElementById(`${bk}_in_${i}`); inp.value=r.v; inp.disabled=true; inp.classList.add(r.ok?'ok':'no'); document.getElementById(`${bk}_btn_${i}`).disabled=true;
+    fb.className="fb show "+(r.ok?"good":"bad"); fb.innerHTML=r.ok?"<b>Correct.</b>":"<b>Not quite.</b> The answer is <i class='lat-word'>"+escH(it.a[0])+"</i>. Say it aloud, then carry on."; }
+}
+
+/* ================= THE SCAFFOLD: tap a word for help; verb, who, subject, object; then translate =================
+   state.tr[sec_i] = { v,p,s,o : 0/1 (first try right?) · t : 0/1/2 · text · auto · look }                          */
+const PUNCT=/[,.;:?!"“”‘’]/g;
+const CUR={st1:0,st2:0};
+const LIVE={};            /* taps in progress for the sentence on screen: {v:Set, s:Set, o:Set, wrong:{v,s,o,p}} */
+const STEPKEYS=['v','p','s','x','o'];
+
+function wordSpent(src,si,wi){ return !!(state.seen&&state.seen[src+'_'+si+'_'+wi]); }
+function popWord(src,si,wi){
+  if(src==='solo') return;                 /* no word help in On your own */
+  if(wordSpent(src,si,wi)) return;         /* each word can be looked up once per sentence */
+  const s=(src==='solo'?SOLO:STORY[src])[si], w=s.w[wi];
+  const solved = src==='solo' ? (soloPeek(si).mk!==undefined) : stepDone(src,si,'o');
+  document.getElementById('pw').textContent=w[0].replace(PUNCT,'');
+  document.getElementById('pl').textContent='Dictionary form: '+w[1];
+  document.getElementById('pm').textContent=w[2];
+  document.getElementById('pg').textContent=w[3]+(solved?'  ·  '+w[4]:'');
+  document.getElementById('pop').style.display='block';
+  document.querySelectorAll('.w.sel').forEach(e=>e.classList.remove('sel'));
+  document.querySelectorAll(`.w[data-k="${src}"][data-s="${si}"][data-w="${wi}"]`).forEach(e=>{ e.classList.add('sel','spent'); e.removeAttribute('onclick'); });
+  state.seen=state.seen||{}; state.seen[src+'_'+si+'_'+wi]=1;
+  if(src==='solo'){ state.solo=state.solo||{}; const r=state.solo[si]||(state.solo[si]={}); if(r.mk===undefined){ r.look=(r.look||0)+1; save(); } }
+  else if(!sentDone(src,si)){ const r=sentRec(src,si); r.look=(r.look||0)+1; }
+  save();
+}
+function hidePop(){ const p=document.getElementById('pop'); if(p) p.style.display='none'; document.querySelectorAll('.w.sel').forEach(e=>e.classList.remove('sel')); }
+function roleClass(s,wi,sec,si){ let c='';
+  if(sec&&stepDone(sec,si,'v')&&s.verb.includes(wi)) c=' rv';
+  if(sec&&stepDone(sec,si,'s')&&s.subj.includes(wi)) c=' rs';
+  if(sec&&stepDone(sec,si,'x')&&(s.phr||[]).includes(wi)) c=' rx';
+  if(sec&&stepDone(sec,si,'o')&&s.obj.includes(wi)) c=' ro';
+  return c; }
+function wordsHTML(src,si){ const s=(src==='solo'?SOLO:STORY[src])[si];
+  if(src==='solo') return s.w.map(w=>`<span class="wp">${escH(w[0])}</span>`).join(' ');
+  return s.w.map((w,i)=>{ const sp=wordSpent(src,si,i);
+    return `<span class="w${roleClass(s,i,src,si)}${sp?' spent':''}" data-k="${src}" data-s="${si}" data-w="${i}"${sp?'':` onclick="popWord('${src}',${si},${i})"`}>${escH(w[0])}</span>`; }).join(' '); }
+
+function fillText(sec){ const el=document.getElementById(sec+'_text'); if(!el) return;
+  el.innerHTML=STORY[sec].map((s,i)=>`<span class="tl"><span class="ln">${i+1}</span>${s.ctx?'<span class="tctx">'+escH(s.ctx)+'</span>':''}<i>${wordsHTML(sec,i)}</i></span>`).join(''); }
+function stepDone(sec,i,k){ const r=sentPeek(sec,i); return r[k]!==undefined&&r[k]!==null; }
+function renderStory(sec){
+  const c=document.getElementById(sec+'Body'); if(!c) return;
+  c.innerHTML=`<nav class="stabs" id="${sec}_tabs"></nav><div id="${sec}_work"></div>
+   <div class="allbox"><h3>The story so far</h3><p class="note">Your translations collect here as you mark them. When you have all of them, read the story through.</p><div class="sofar" id="${sec}_all"></div></div>`;
+  const firstOpen=STORY[sec].findIndex((s,i)=>!sentDone(sec,i)); CUR[sec]=firstOpen<0?0:firstOpen;
+  sTabs(sec); renderSentence(sec); updAll(sec); fillText(sec);
+}
+function sTabs(sec){ document.getElementById(sec+'_tabs').innerHTML=STORY[sec].map((s,i)=>
+  `<button class="${i===CUR[sec]?'on':''} ${sentDone(sec,i)?'done':''}" onclick="goS('${sec}',${i})">${i+1}</button>`).join(''); }
+function goS(sec,i){ CUR[sec]=i; hidePop(); sTabs(sec); renderSentence(sec); document.getElementById(sec+'_tabs').scrollIntoView({behavior:'smooth',block:'start'}); }
+
+function chipRow(sec,k,s,noneLabel){
+  let h=`<div class="topts">`+s.w.map((w,wi)=>`<button class="tapw" id="${sec}_${k}_${wi}" onclick="tapW('${sec}','${k}',${wi})">${escH(w[0].replace(PUNCT,''))}</button>`).join('');
+  if(noneLabel) h+=`<button class="tapw none" id="${sec}_${k}_none" onclick="tapW('${sec}','${k}',-1)">${noneLabel}</button>`;
+  return h+`</div><div class="fb" id="${sec}_fb_${k}"></div>`;
+}
+function renderSentence(sec){
+  const i=CUR[sec], s=STORY[sec][i], n=STORY[sec].length, r=sentPeek(sec,i);
+  LIVE[sec]={v:new Set(),s:new Set(),x:new Set(),o:new Set(),wrong:{}};
+  const nv=s.verb.length;
+  let h=`<h3 class="shead">Sentence ${i+1} of ${n}</h3>`;
+  if(s.ctx) h+=`<div class="ctx">${escH(s.ctx)}</div>`;
+  h+=`<div class="latin" id="${sec}_latin">${wordsHTML(sec,i)}</div>
+      <p class="note">Stuck on a word? Tap it for its meaning. You get one look at each word in a sentence, so read it carefully. <span class="key"><span class="kv">verb</span> <span class="ks">subject</span> <span class="kx">phrase</span> <span class="ko">object</span></span></p>`;
+  h+=`<div class="step" id="${sec}_step_v"><div class="stephead"><span class="stepno">1</span>Find the verb</div>
+      <div class="stepq">${nv>1?`This sentence has <b>${nv} verbs</b>. Tap ${nv===2?'them both':'all of them'}.`:'Tap the verb. Start by looking at the end of the sentence.'}</div>${chipRow(sec,'v',s)}</div>`;
+  h+=`<div class="step" id="${sec}_step_p"><div class="stephead"><span class="stepno">2</span>Read the ending: who is doing it?</div>
+      <div class="stepq">Look at the ending of <i class="lat-word">${escH(s.verb.map(x=>s.w[x][0].replace(PUNCT,'')).join(' / '))}</i>.</div>
+      <div class="topts">`+PERSONS.map((p,pi)=>`<button class="tapw mc" id="${sec}_p_${pi}" onclick="pickWho('${sec}',${pi})">${p}</button>`).join('')+`</div><div class="fb" id="${sec}_fb_p"></div></div>`;
+  h+=`<div class="step" id="${sec}_step_s"><div class="stephead"><span class="stepno">3</span>Find the subject</div>
+      <div class="stepq">Tap the nominative word (or words) doing the verb: -a / -us for one, -ae / -i for more than one. A word ending -am, -um, -as or -os is never the subject, even when it comes first. If there is no subject word, say so: in a story it is then the last person named. With a part of sum, tap the subject only, not the complement.</div>${chipRow(sec,'s',s,'No subject word: it is inside the verb')}</div>`;
+  h+=`<div class="step" id="${sec}_step_x"><div class="stephead"><span class="stepno">4</span>Bracket the phrase</div>
+      <div class="stepq">Tap the preposition (<i>ad, in, per, circum, contra</i>) and every word in its phrase: the accusative noun after it. Not every sentence has one.</div>${chipRow(sec,'x',s,'No preposition in this sentence')}</div>`;
+  h+=`<div class="step" id="${sec}_step_o"><div class="stephead"><span class="stepno">5</span>Find the object</div>
+      <div class="stepq">Tap the accusative word (or words) left <b>outside</b> the phrase, the one a doing verb is done to: -am / -um for one, -as / -os for more than one. A nominative that goes with sum is the complement, not the object.</div>${chipRow(sec,'o',s,'No object in this sentence')}</div>`;
+  h+=`<div class="step" id="${sec}_step_t"><div class="stephead"><span class="stepno">6</span>Translate</div>
+      <div class="stepq">Subject first, then the verb, then the object, then the phrase. Write the whole sentence in English, and get singular and plural right. No subject word? Use he, she, we, you or they from the ending, and keep the person from the sentence before. <i>in</i> + accusative = into or onto.</div>
+      <textarea class="wtext" id="${sec}_in" placeholder="Your translation…" oninput="draft('${sec}')">${escH(r.text||'')}</textarea>
+      <div class="btnrow"><button class="btn btn-gold" id="${sec}_chk" onclick="checkTrans('${sec}')">Check my translation</button></div>
+      <div class="model-box" id="${sec}_model"></div>
+      <div class="selfmark" id="${sec}_wm" style="display:none"><span class="note" style="align-self:center">Mark yourself honestly:</span>
+        <button class="sm nailed" id="${sec}_wm2" onclick="markW('${sec}',2)">2 &ndash; same meaning as the model</button>
+        <button class="sm close" id="${sec}_wm1" onclick="markW('${sec}',1)">1 &ndash; one slip</button>
+        <button class="sm notyet" id="${sec}_wm0" onclick="markW('${sec}',0)">0 &ndash; not yet</button></div></div>`;
+  h+=`<div class="navbtns"><button class="btn btn-ghost" ${i===0?'disabled':''} onclick="goS('${sec}',${i-1})">&larr; Previous</button><button class="btn btn-gold" id="${sec}_next" ${i===n-1?'disabled':''} onclick="goS('${sec}',${i+1})">Next sentence &rarr;</button></div>`;
+  document.getElementById(sec+'_work').innerHTML=h;
+  paintSentence(sec);
+}
+/* paint everything that is already answered, and lock the steps that are not yet open */
+function paintSentence(sec){
+  const i=CUR[sec], s=STORY[sec][i], r=sentPeek(sec,i);
+  const E={v:s.ev,p:s.ew,s:s.es,x:s.ex,o:s.eo};
+  ['v','s','x','o'].forEach(k=>{ if(!stepDone(sec,i,k)) return;
+    const ans=k==='v'?s.verb:(k==='s'?s.subj:(k==='x'?(s.phr||[]):s.obj));
+    if(ans.length) ans.forEach(wi=>document.getElementById(`${sec}_${k}_${wi}`).classList.add('right')); else document.getElementById(`${sec}_${k}_none`).classList.add('right');
+    document.querySelectorAll(`#${sec}_step_${k} .tapw`).forEach(b=>b.disabled=true);
+    fbSet(sec,k,r[k]?'good':'info',(r[k]?'✓ ':'Got there. ')+E[k]); });
+  if(stepDone(sec,i,'p')){ document.getElementById(`${sec}_p_${s.who}`).classList.add('right');
+    document.querySelectorAll(`#${sec}_step_p .tapw`).forEach(b=>b.disabled=true); fbSet(sec,'p',r.p?'good':'info',(r.p?'✓ ':'Got there. ')+E.p); }
+  let open=true;
+  STEPKEYS.concat(['t']).forEach(k=>{ const el=document.getElementById(`${sec}_step_${k}`); el.classList.toggle('locked',!open); if(k!=='t'&&!stepDone(sec,i,k)) open=false; });
+  document.getElementById(sec+'_latin').innerHTML=wordsHTML(sec,i); fillText(sec);
+  if(sentDone(sec,i)||r.shown) showModelBox(sec,true);
+}
+function fbSet(sec,k,cls,txt){ const fb=document.getElementById(`${sec}_fb_${k}`); fb.className='fb show '+cls; fb.textContent=txt; }
+function finishStep(sec,k){ const i=CUR[sec], r=sentRec(sec,i); if(r[k]===undefined||r[k]===null) r[k]=LIVE[sec].wrong[k]?0:1; after(); paintSentence(sec);
+  const order=STEPKEYS.concat(['t']), nx=document.getElementById(`${sec}_step_${order[order.indexOf(k)+1]}`); if(nx) nx.scrollIntoView({behavior:'smooth',block:'center'}); }
+function tapW(sec,k,wi){
+  const i=CUR[sec], s=STORY[sec][i]; if(stepDone(sec,i,k)) return;
+  const ans=k==='v'?s.verb:(k==='s'?s.subj:(k==='x'?(s.phr||[]):s.obj)), L=LIVE[sec];
+  const b=document.getElementById(`${sec}_${k}_${wi<0?'none':wi}`);
+  const right = wi<0 ? ans.length===0 : ans.includes(wi);
+  if(right){ b.classList.add('right'); if(wi>=0) L[k].add(wi);
+    if(wi<0||ans.every(x=>L[k].has(x))) finishStep(sec,k);
+    else fbSet(sec,k,'info',`Good. ${ans.length-L[k].size} more to find.`); }
+  else { L.wrong[k]=true; b.classList.add('wrong'); setTimeout(()=>b.classList.remove('wrong'),1400);
+    let msg;
+    if(wi<0) msg = k==='s' ? "There is a subject word here. Look for a noun ending -a or -us (one) or -ae or -i (more than one) that is doing the verb."
+      : k==='x' ? "There is a preposition here: ad, in, per, circum or contra. Tap it and the noun after it."
+      : "There is an object here. Look for a noun ending -am or -um (one) or -as or -os (more than one) that is not inside the phrase.";
+    else { const w=s.w[wi], word=w[0].replace(PUNCT,'');
+      if(k==='v') msg=`${word} is not a verb.`+(/^noun/.test(w[3])&&/[ao]s$/.test(word)?` It ends in -s, but it is an accusative plural noun.`:``)+` Verbs end -o, -s, -t, -mus, -tis or -nt, or are a part of sum (sum, es, est, sumus, estis, sunt). The verb usually comes last.`;
+      else msg=`Not ${word}: ${w[4]}.`+(k==='s'&&s.subj.length===0?" Is there a subject word at all?":"")+(k==='x'&&!(s.phr||[]).length?" Is there a preposition at all?":"")+(k==='o'&&s.obj.length===0?(s.sum?" sum is a being verb, so there is no object.":" Is there an object at all? The accusative after a preposition belongs to the phrase."):""); }
+    fbSet(sec,k,'bad',msg+" Try again."); }
+}
+function pickWho(sec,pi){
+  const i=CUR[sec], s=STORY[sec][i]; if(stepDone(sec,i,'p')) return;
+  const b=document.getElementById(`${sec}_p_${pi}`);
+  if(pi===s.who){ b.classList.add('right'); finishStep(sec,'p'); }
+  else { LIVE[sec].wrong.p=true; b.classList.add('wrong'); b.disabled=true;
+    fbSet(sec,'p','bad', s.sum ? SUMHINT : "Not quite. Say the six endings: -o, -s, -t, -mus, -tis, -nt = I, you, he/she/it, we, you (more than one), they. Which one is on this verb? Try again."); }
+}
+
+/* step 5: translate. An exact match with an accepted version scores 2 automatically; otherwise the pupil sees the model and self-marks. */
+function normEng(s){ let t=' '+String(s||'').toLowerCase().replace(/[’']/g,'').replace(/-/g,' ').replace(/[^a-z\s]/g,' ').replace(/\s+/g,' ').trim()+' ';
+  /* 24 Sep 2026: "servant" is accepted for servus; "messanger" is accepted as a spelling of messenger */
+  for(let k=0;k<2;k++) t=t.replace(/ servants /g,' slaves ').replace(/ servant /g,' slave ').replace(/ messangers /g,' messengers ').replace(/ messanger /g,' messenger ');
+  return t; }
+/* true when the "translation" is mostly the Latin sentence typed back */
+function isLatinCopy(latin,text){ const L=new Set(normLat(latin).split(' ')); const T=normLat(text).split(' ').filter(Boolean);
+  if(!T.length) return false; const hit=T.filter(w=>L.has(w)).length; return hit/T.length>0.5; }
+function stripArt(s){ return s.replace(/ (the|a|an) /g,' ').replace(/ (the|a|an) /g,' ').replace(/\s+/g,' ').trim(); }
+function expand(p){ const m=/\(([^()]*)\)/.exec(p); if(!m) return [p]; let out=[]; m[1].split('|').forEach(alt=>{ out=out.concat(expand(p.slice(0,m.index)+alt+p.slice(m.index+m[0].length))); }); return out; }
+const ACC_CACHE=new Map();
+function accepted(s){ if(!ACC_CACHE.has(s)){ const set=new Set(); s.acc.concat([s.model]).forEach(p=>expand(p).forEach(v=>set.add(stripArt(normEng(v))))); ACC_CACHE.set(s,set); } return ACC_CACHE.get(s); }
+function matches(s,text){ return accepted(s).has(stripArt(normEng(text))); }
+/* 1 Oct 2026: a sentence may carry must:[{re,say}] — something its English has to contain
+   before a pupil can award themselves 2. Stops a self-marked 2/2 on a translation that
+   misses the point of the sentence (e.g. no "you" for servi estis). 1 and 0 stay open. */
+function mustMiss(s,text){ if(!s.must||!s.must.length) return [];
+  const t=normEng(text);
+  return s.must.filter(m=>{ try{ return !(new RegExp(m.re,'i')).test(t); }catch(e){ return false; } }); }
+let _dT=null;
+function draft(sec){ const i=CUR[sec]; if(sentDone(sec,i)) return; sentRec(sec,i).text=document.getElementById(sec+'_in').value; clearTimeout(_dT); _dT=setTimeout(save,1200); }
+function checkTrans(sec){
+  const i=CUR[sec], s=STORY[sec][i], ta=document.getElementById(sec+'_in'), m=document.getElementById(sec+'_model');
+  if(sentDone(sec,i)) return;
+  if(ta.value.trim().split(/\s+/).length<2){ m.className='model-box show warn'; m.innerHTML='Write your own translation first. Then you can check it.'; return; }
+  if(isLatinCopy(s.lat,ta.value)){ m.className='model-box show warn'; m.innerHTML='That is the Latin. Write the sentence in <b>English</b>, then check it.'; return; }
+  const r=sentRec(sec,i); r.text=ta.value.trim();
+  if(matches(s,r.text)){ r.t=2; r.auto=true; after(); sTabs(sec); updAll(sec); }
+  else { r.shown=true; save(); }
+  showModelBox(sec,false);
+}
+function showModelBox(sec,restoring){
+  const i=CUR[sec], s=STORY[sec][i], r=sentPeek(sec,i), m=document.getElementById(sec+'_model'), ta=document.getElementById(sec+'_in');
+  m.className='model-box show';
+  m.innerHTML=(r.auto?'<b>✓ Correct: 2 marks.</b> ':'')+'<b>Model:</b> '+escH(s.model)+'<br><span class="note">Latin has no word for "the" or "a": use whichever sounds right. The present tense can be "carries" or "is carrying". Check your singulars and plurals against the model.</span>';
+  ta.readOnly=true; document.getElementById(sec+'_chk').disabled=true;
+  if(!r.auto){ document.getElementById(sec+'_wm').style.display='flex'; if(r.t!==undefined&&r.t!==null) document.getElementById(sec+'_wm'+r.t).classList.add('chosen');
+    const miss=mustMiss(s,r.text||''), two=document.getElementById(sec+'_wm2');
+    if(two){ two.disabled=miss.length>0; two.title=miss.length?'Your English is missing something the sentence needs.':''; }
+    if(miss.length){ m.innerHTML+='<br><span class="note" style="color:#7c1a16"><b>Not 2 marks.</b> Your English is missing '+miss.map(x=>x.say).join('; and ')+'. Give yourself 1 or 0 and read the model again.</span>';
+      if(r.t===2){ r.t=1; ['0','1','2'].forEach(k=>{const b=document.getElementById(sec+'_wm'+k); if(b) b.classList.remove('chosen');});
+        document.getElementById(sec+'_wm1').classList.add('chosen'); after(); sTabs(sec); updAll(sec); } } }
+}
+function markW(sec,v){ const i=CUR[sec], r=sentRec(sec,i);
+  /* the must-rule also holds here, not only on the disabled button */
+  if(v===2 && mustMiss(STORY[sec][i], r.text||'').length) v=1;
+  r.t=v;
+  ['0','1','2'].forEach(k=>document.getElementById(sec+'_wm'+k).classList.remove('chosen')); document.getElementById(sec+'_wm'+v).classList.add('chosen');
+  after(); sTabs(sec); updAll(sec); }
+function updAll(sec){ const el=document.getElementById(sec+'_all'); if(!el) return;
+  const lines=STORY[sec].map((s,i)=>{ const r=sentPeek(sec,i); if(!sentDone(sec,i)) return ''; return `<div><b>${i+1}.</b> ${s.ctx?'<span class="note">'+escH(s.ctx)+'</span> ':''}${escH(r.t===2?(r.text||s.model):s.model)}</div>`; }).filter(Boolean);
+  el.innerHTML=lines.length?lines.join(''):'<span class="note">Nothing yet.</span>'; }
+
+/* re-open the model box if a pupil had already seen it but not yet marked (after a reload) */
+function reopenShown(sec){ const i=CUR[sec], r=sentPeek(sec,i); if(r.shown&&!sentDone(sec,i)) showModelBox(sec,true); }
+
+/* ---------------- 6 · solo: no steps ---------------- */
+function renderSolo(){
+  const c=document.getElementById('soloBody'); if(!c) return;
+  c.innerHTML=SOLO.map((s,i)=>{ const r=soloPeek(i);
+    return `<div class="instance"><div class="qcount">Sentence ${i+1} of ${SOLO.length}</div>
+    <div class="latin">${wordsHTML('solo',i)}</div>
+    <textarea class="wtext" id="solo_in_${i}" placeholder="Your translation…" oninput="soloDraft(${i})">${escH(r.text||'')}</textarea>
+    <div class="btnrow"><button class="btn btn-gold" id="solo_chk_${i}" onclick="soloCheck(${i})">Check my translation</button></div>
+    <div class="model-box" id="solo_m_${i}"></div>
+    <div class="selfmark" id="solo_wm_${i}" style="display:none"><span class="note" style="align-self:center">Mark yourself honestly:</span>
+      <button class="sm nailed" data-v="2" onclick="soloMark(${i},2)">2 &ndash; same meaning as the model</button>
+      <button class="sm close" data-v="1" onclick="soloMark(${i},1)">1 &ndash; one slip</button>
+      <button class="sm notyet" data-v="0" onclick="soloMark(${i},0)">0 &ndash; not yet</button></div></div>`; }).join('');
+  SOLO.forEach((s,i)=>{ const r=soloPeek(i); if(r.mk!==undefined||r.shown) soloShow(i); });
+}
+let _sT=null;
+function soloDraft(i){ state.solo=state.solo||{}; const r=state.solo[i]||(state.solo[i]={}); if(r.mk!==undefined) return; r.text=document.getElementById('solo_in_'+i).value; clearTimeout(_sT); _sT=setTimeout(save,1200); }
+function soloCheck(i){ const ta=document.getElementById('solo_in_'+i), m=document.getElementById('solo_m_'+i);
+  if(ta.value.trim().split(/\s+/).length<2){ m.className='model-box show warn'; m.innerHTML='Write your own translation first. Then you can check it.'; return; }
+  state.solo=state.solo||{}; const r=state.solo[i]||(state.solo[i]={}); r.text=ta.value.trim();
+  if(matches(SOLO[i],r.text)){ r.mk=2; r.auto=true; after(); } else { r.shown=true; save(); }
+  soloShow(i); }
+function soloShow(i){ const r=soloPeek(i), m=document.getElementById('solo_m_'+i);
+  m.className='model-box show'; m.innerHTML=(r.auto?'<b>✓ Correct: 2 marks.</b> ':'')+'<b>Model:</b> '+escH(SOLO[i].model);
+  document.getElementById('solo_in_'+i).readOnly=true; document.getElementById('solo_chk_'+i).disabled=true;
+  if(!r.auto){ const row=document.getElementById('solo_wm_'+i); row.style.display='flex'; row.querySelectorAll('.sm').forEach(b=>b.classList.toggle('chosen', r.mk!==undefined && +b.dataset.v===r.mk)); } }
+function soloMark(i,v){ state.solo=state.solo||{}; const r=state.solo[i]||(state.solo[i]={}); r.mk=v; after(); soloShow(i); }
+
+
+/* ===================== XP EXTENSION MODULE v1 (24 Sep 2026) =====================
+   Opt-in extension for Simon Beasley's cloud-tracked HTML lessons (Ch1 scaffold engine, workbook engine, any other).
+   Opens when the main lesson is finished. Computer-marked only (typed or multiple choice), two tries per question:
+   full XP first time, less on the second, then nothing. XP is stored apart from the lesson score.
+   The lesson supplies XP_CONFIG (content, rewards, challenge) and XP_HOOKS (how to talk to its own engine),
+   puts <div id="xpBody"></div> in an extension panel, optionally <div id="xpRules"></div> on its start page,
+   and adds  ext: xpSummary()  to its cloud blob. Everything else is here.
+   Pupil state lives in  XP_HOOKS.state().ext  so it saves and resumes with the rest of the lesson.            */
+function xpEsc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function xpNorm(s){ return String(s||'').toLowerCase().replace(/[^a-z\s]/g,' ').replace(/\s+/g,' ').trim(); }
+function xpSorted(s){ return xpNorm(s).split(' ').sort().join(' '); }
+function xpStrip(s){ const d=document.createElement('div'); d.innerHTML=String(s||''); return (d.textContent||'').replace(/\s+/g,' ').trim(); }
+function xpE(){ const st=XP_HOOKS.state(); st.ext=st.ext||{}; return st.ext; }
+function xpPeek(lv,i){ const st=XP_HOOKS.state(); return (st.ext&&st.ext[lv.id+'_'+i])||{}; }
+function xpRec(lv,i){ const E=xpE(), k=lv.id+'_'+i; return E[k]||(E[k]={}); }
+function xpRewards(){ return XP_CONFIG.rewards.slice().sort((a,b)=>a.xp-b.xp); }          /* lowest first; the last is the best */
+function xpLevelStats(lv){ let xp=0,n=0,first=0; lv.items.forEach((it,i)=>{ const r=xpPeek(lv,i); if(r.done){ n++; xp+=r.xp||0; if(r.ok&&r.tries===1) first++; } });
+  return {xp:xp, n:n, total:lv.items.length, max:lv.items.length*lv.xp[0], done:n>=lv.items.length, first:first}; }
+function xpLevelOpen(li){ if(!XP_HOOKS.coreDone()) return false; if(li===0) return true; const p=xpLevelStats(XP_CONFIG.levels[li-1]); return p.done && p.xp*100>=XP_CONFIG.unlockPct*p.max; }
+function xpTotals(){ let xp=0,max=0; XP_CONFIG.levels.forEach(lv=>{ const p=xpLevelStats(lv); xp+=p.xp; max+=p.max; }); return {xp:xp, max:max, pct:max?Math.round(100*xp/max):0}; }
+function xpAllDone(){ return XP_CONFIG.levels.every(lv=>xpLevelStats(lv).done); }
+function xpEarned(){ const t=xpTotals().xp; return xpRewards().filter(r=>t>=r.xp); }
+function xpBest(){ const e=xpEarned(); return e.length?e[e.length-1]:null; }
+function xpChallengeMet(){ const C=XP_CONFIG.challenge; if(!C) return false;
+  if(C.upTo){ const i=XP_CONFIG.levels.findIndex(l=>l.id===C.upTo); if(i<0) return false;
+    return XP_CONFIG.levels.slice(0,i+1).every(lv=>xpLevelStats(lv).done); }
+  const t=xpTotals(); return xpAllDone() && t.xp*100>=C.pct*t.max; }
+/* how the challenge is described to the pupil */
+function xpChallengeWhat(){ const C=XP_CONFIG.challenge; if(!C) return '';
+  if(C.upTo){ const i=XP_CONFIG.levels.findIndex(l=>l.id===C.upTo);
+    const names=XP_CONFIG.levels.slice(0,i+1).map(l=>'Level '+l.id);
+    return 'finish '+(names.length>1?names.slice(0,-1).join(', ')+' and '+names[names.length-1]:names[0]); }
+  return 'finish all '+XP_CONFIG.levels.length+' levels with '+C.pct+'% or more'; }
+function xpChallengeShort(){ const C=XP_CONFIG.challenge; if(!C) return '';
+  if(C.upTo){ const i=XP_CONFIG.levels.findIndex(l=>l.id===C.upTo); return 'Levels I\u2013'+XP_CONFIG.levels[i].id+' finished'; }
+  return 'all '+XP_CONFIG.levels.length+' levels, '+C.pct+'%+'; }
+function xpStamp(){ const E=xpE(), now=new Date().toISOString();
+  if(!E.startedAt) E.startedAt=now;
+  XP_CONFIG.levels.forEach(lv=>{ if(xpLevelStats(lv).done && !E['doneAt_'+lv.id]) E['doneAt_'+lv.id]=now; });
+  xpEarned().forEach(r=>{ if(!E['reward_'+r.key]) E['reward_'+r.key]=now; });
+  if(xpChallengeMet() && !E.challengeAt) E.challengeAt=now; }
+function xpTy(li,i){
+  const lv=XP_CONFIG.levels[li]; if(!xpLevelOpen(li)) return;
+  const r=xpRec(lv,i); if(r.done) return;
+  const inp=document.getElementById('xp_'+lv.id+'_in_'+i); const v=(inp&&inp.value||'').trim(); if(!v) return;
+  /* a wrong first try re-renders an empty box, so a second Enter press finds nothing to check */
+  const it=lv.items[i];
+  const ok = lv.anyOrder ? it.a.map(xpSorted).includes(xpSorted(v)) : it.a.map(xpNorm).includes(xpNorm(v));
+  r.tries=(r.tries||0)+1; (r.ans=r.ans||[]).push(v);
+  if(ok){ r.ok=true; r.done=true; r.xp=lv.xp[r.tries-1]||0; }
+  else if(r.tries>=2){ r.ok=false; r.done=true; r.xp=0; }
+  xpStamp(); XP_HOOKS.changed(); xpRender();
+  const again=document.getElementById('xp_'+lv.id+'_in_'+i), next=document.getElementById('xp_'+lv.id+'_in_'+(i+1));
+  if(again&&!again.readOnly) again.focus(); else if(next) next.focus({preventScroll:true});
+}
+function xpMC(li,i,j){
+  const lv=XP_CONFIG.levels[li]; if(!xpLevelOpen(li)) return;
+  const r=xpRec(lv,i); if(r.done) return; r.picks=r.picks||[]; if(r.picks.includes(j)) return;
+  const it=lv.items[i]; r.picks.push(j); r.tries=r.picks.length;
+  if(j===it.a){ r.ok=true; r.done=true; r.xp=lv.xp[r.tries-1]||0; }
+  else if(r.tries>=2){ r.ok=false; r.done=true; r.xp=0; }
+  xpStamp(); XP_HOOKS.changed(); xpRender();
+}
+function xpItemHTML(lv,li,it,i){
+  const r=xpPeek(lv,i), n=lv.items.length;
+  let h='<div class="instance"><div class="qcount">'+lv.name+' &middot; question '+(i+1)+' of '+n+'</div><div class="qtext">'+it.q+'</div>';
+  if(lv.type==='mc'){
+    const picks=r.picks||[];
+    h+='<div class="opts">'+it.opts.map((o,j)=>{ let c='opt'; const lock=r.done||picks.includes(j); if(lock) c+=' locked';
+        if(picks.includes(j)&&j!==it.a) c+=' wrong'; if(r.done&&j===it.a) c+=' correct';
+        return '<button class="'+c+'" '+(lock?'disabled':'')+' onclick="xpMC('+li+','+i+','+j+')">'+o+'</button>'; }).join('')+'</div>';
+    if(r.done) h+='<div class="fb show '+(r.ok?'good':'bad')+'">'+(r.ok?'<b>Correct'+(r.tries>1?' on the second try':'')+': +'+r.xp+' XP.</b> ':'<b>No XP this time.</b> ')+(it.why||'')+'</div>';
+    else if(picks.length) h+='<div class="fb show bad"><b>Not that one.</b> One more try for '+lv.xp[1]+' XP.</div>';
+  } else {
+    h+='<div class="tyrow"><input type="text" class="tyin '+(r.done?(r.ok?'ok':'no'):'')+'" id="xp_'+lv.id+'_in_'+i+'" '+(r.done?'readonly':'')+' value="'+(r.done?xpEsc(r.ans[r.ans.length-1]):'')+'" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="'+xpEsc(XP_CONFIG.placeholder||'Type your answer…')+'" onkeydown="if(event.key===\'Enter\'){event.preventDefault();xpTy('+li+','+i+');}">'
+      +(r.done?'':'<button class="btn btn-gold" onclick="xpTy('+li+','+i+')">Check</button>')+'</div>';
+    if(r.done) h+='<div class="fb show '+(r.ok?'good':'bad')+'">'+(r.ok?'<b>Correct'+(r.tries>1?' on the second try':'')+': +'+r.xp+' XP.</b>':'<b>No XP this time.</b> The answer is <i>'+xpEsc(it.a[0])+'</i>.')+(r.ans.length>1?' <span class="note">Your tries: '+r.ans.map(xpEsc).join(' &rarr; ')+'</span>':'')+'</div>';
+    else if(r.tries) h+='<div class="fb show bad"><b>Not quite:</b> <s>'+xpEsc(r.ans[0])+'</s>. One more try for '+lv.xp[1]+' XP.</div>';
+  }
+  return h+'</div>';
+}
+/* rules table for the start page (keeps the numbers in one place) */
+function xpRulesHTML(){ const C=XP_CONFIG.challenge, T=XP_CONFIG.teacher||'your teacher';
+  return '<table class="gram"><tr><th>Reward</th><th>How</th></tr>'
+    +xpRewards().slice().reverse().map(r=>'<tr><td class="rl">'+xpEsc(r.name)+'</td><td>'+r.xp+' XP: '+xpEsc(r.text)+'</td></tr>').join('')
+    +(C?'<tr><td class="rl">Class challenge</td><td>If '+C.need+' people in the class '+xpChallengeWhat()+' in one lesson, '+xpEsc(C.reward||T+' puts the laptops away')+'.</td></tr>':'')
+    +'</table>'; }
+function xpRender(){
+  if(!xpRender._checked){ xpRender._checked=true; const mx=xpTotals().max; xpRewards().forEach(r=>{ if(r.xp>mx) console.warn('XP module: reward "'+r.name+'" needs '+r.xp+' XP but only '+mx+' XP is available.'); }); }
+  const rules=document.getElementById('xpRules'); if(rules&&!rules.innerHTML) rules.innerHTML=xpRulesHTML();
+  const c=document.getElementById('xpBody'); if(!c) return;
+  const tt=xpTotals(), core=XP_HOOKS.coreDone(), got=xpEarned(), chal=xpChallengeMet(), C=XP_CONFIG.challenge, T=XP_CONFIG.teacher||'your teacher';
+  let h='<div class="xpbar"><div class="xptop"><span class="xpnum">'+tt.xp+' XP</span><span class="note">of '+tt.max+' possible</span></div>'
+    +'<div class="xptrack"><i style="width:'+(tt.max?Math.round(100*tt.xp/tt.max):0)+'%"></i>'+xpRewards().map(r=>'<b class="xpmark" style="left:'+Math.round(100*r.xp/tt.max)+'%" title="'+xpEsc(r.name)+': '+r.xp+' XP"></b>').join('')+'</div></div>';
+  h+='<div class="rewards">'+xpRewards().slice().reverse().map(r=>'<div class="reward '+(tt.xp>=r.xp?'got':'')+'"><div class="rw-h">'+(tt.xp>=r.xp?'&#10003; ':'')+xpEsc(r.name)+' <span class="note">'+r.xp+' XP</span></div><div>'+xpEsc(r.text)+'</div></div>').join('')
+    +(C?'<div class="reward chal '+(chal?'got':'')+'"><div class="rw-h">'+(chal?'&#10003; ':'')+'Class challenge <span class="note">'+xpChallengeShort()+'</span></div><div>If '+C.need+' people in the class do this in one lesson, '+xpEsc(C.reward||T+' puts the laptops away')+'.'+(chal?' <b>You count.</b>':'')+'</div></div>':'')+'</div>';
+  const best=xpBest();
+  if(best||chal) h+='<div class="pass"><div class="pass-k">Show '+xpEsc(T)+' at the end of the lesson</div><div class="pass-h">'+(best?xpEsc(best.name):'Class challenge')+'</div><div class="pass-n">'+xpEsc(XP_HOOKS.who())+' &middot; '+tt.xp+' XP'+(chal?' &middot; counts for the class challenge':'')+'</div></div>';
+  if(!core){ h+='<div class="lockmsg" style="font-size:15px">&#128274; The extension opens when the main lesson is finished: every question in every section.'+(XP_HOOKS.coreLeft?' You have <b>'+XP_HOOKS.coreLeft()+'</b> left.':'')+'</div>'; c.innerHTML=h; return; }
+  XP_CONFIG.levels.forEach((lv,li)=>{
+    const p=xpLevelStats(lv), open=xpLevelOpen(li);
+    h+='<div class="lvl '+(open?'':'locked')+' '+(p.done?'fin':'')+'"><div class="lvl-h"><span>'+lv.name+(lv.rank?' &middot; '+lv.rank+(lv.rankEn?' <i>('+lv.rankEn+')</i>':''):'')+'</span><span class="lvl-x">'+p.xp+' / '+p.max+' XP</span></div>'
+      +'<p class="note">'+lv.blurb+' First try: <b>'+lv.xp[0]+' XP</b>. Second try: <b>'+lv.xp[1]+' XP</b>. Then no XP.</p>';
+    if(!open){ const prev=XP_CONFIG.levels[li-1], pp=xpLevelStats(prev), need=Math.ceil(XP_CONFIG.unlockPct*pp.max/100);
+      h+='<div class="lockmsg">&#128274; '+(!pp.done?'Finish '+prev.name+' to open this level. You need at least '+need+' XP from it.':'This level needs at least '+need+' XP from '+prev.name+'. You got '+pp.xp+'. Look back at the answers you missed and ask '+xpEsc(T)+' about them.')+'</div></div>'; return; }
+    if(p.done) h+='<div class="lvl-done">'+lv.name+' complete: '+p.xp+' / '+p.max+' XP, '+p.first+' of '+p.total+' right first time.</div>';
+    h+=lv.items.map((it,i)=>xpItemHTML(lv,li,it,i)).join('')+'</div>';
+  });
+  c.innerHTML=h;
+}
+/* the ext field of the cloud blob — the trackers' pack-up panel reads this */
+function xpSummary(){
+  const tt=xpTotals(), st=XP_HOOKS.state(), E=st.ext||{}, levels={};
+  XP_CONFIG.levels.forEach(lv=>{ const p=xpLevelStats(lv); levels[lv.id]={name:lv.name+(lv.rank?' '+lv.rank:''), xp:p.xp, max:p.max, answered:p.n, total:p.total, done:p.done, first:p.first, doneAt:E['doneAt_'+lv.id]||null}; });
+  const items=[];
+  XP_CONFIG.levels.forEach(lv=>lv.items.forEach((it,i)=>{ const r=xpPeek(lv,i); if(!r.tries) return;
+    items.push({id:'ext'+lv.id+'_'+i, level:lv.id, q:xpStrip(it.q), right:(lv.type==='mc'?xpStrip(it.opts[it.a]):it.a[0]),
+      a:(lv.type==='mc'?(r.picks||[]).map(j=>xpStrip(it.opts[j])):(r.ans||[])), ok:!!r.ok, done:!!r.done, xp:r.xp||0, tries:r.tries}); }));
+  const best=xpBest();
+  return { v:1, xp:tt.xp, max:tt.max, pct:tt.pct, open:XP_HOOKS.coreDone(), allDone:xpAllDone(),
+    rewards:xpEarned().map(r=>r.key), best:best?best.key:null,
+    rewardInfo:xpRewards().map(r=>({key:r.key, name:r.name, xp:r.xp})),
+    rewardsAt:Object.fromEntries(xpRewards().filter(r=>E['reward_'+r.key]).map(r=>[r.key,E['reward_'+r.key]])),
+    challenge:!!E.challengeAt, challengeAt:E.challengeAt||null, challengeRule:XP_CONFIG.challenge||null,
+    startedAt:E.startedAt||null, levels:levels, items:items };
+}
+/* ===================== end XP EXTENSION MODULE ===================== */
+
+/* ---------------- scoreboard ---------------- */
+function renderBoard(){
+  const tt=totals();
+  document.getElementById('boardNow').textContent=tt.c; document.getElementById('boardMax').textContent=tt.t;
+  document.getElementById('boardTable').innerHTML=`<tr><th>Section</th><th>Your score</th><th>Finished?</th></tr>`+SECS.map(k=>{ const p=tabProgress(k);
+    return `<tr><td class="n">${SECNAME[k]}</td><td>${tabPoints(k)} / ${secMax(k)}</td><td>${p.done>=p.total?'✓':(p.done+' of '+p.total)}</td></tr>`; }).join('');
+  const pct=tt.t?Math.round(tt.c/tt.t*100):0, tn=IDENTITY?escH(IDENTITY.cand):"You"; let msg;
+  if(!allDone()) msg=`${tn}: ${pct}% so far. There are sections still to finish: look for the tabs without a tick.`;
+  else if(pct>=90) msg=`${tn}: ${pct}%. You can read a Chapter 1 story: you found the subject even when the object came first, and you kept -as and -os away from sum.`;
+  else if(pct>=70) msg=`${tn}: ${pct}%. Good. Look back at any red answers: which word was really the subject? Which slot was the noun in?`;
+  else if(pct>=50) msg=`${tn}: ${pct}%. A fair start. Read your two boxes of notes again, then look at the red answers.`;
+  else msg=`${tn}: ${pct}%. Keep going. Start with rule 2 in your book: a word ending -am, -um, -as or -os is never the subject. Find the nominative first in every sentence.`;
+  if(allDone()) msg+=` <br><b>The extension is open.</b> Three levels, harder each time: earn XP for a pack-up reward.`;
+  document.getElementById('boardMsg').innerHTML=msg; paintRag();
+}
+function resetAll(){
+  if(!confirm("Clear your answers and start again? (Your copied-notes ticks and your extension XP stay.)")) return;
+  state={notes:state.notes||{}, ext:state.ext||{}}; renderAll(); save();
+}
+function renderAll(){
+  renderBank('recall','mc','recallBody'); renderBank('recallty','ty','recalltyBody');
+  const rn=document.getElementById('recallNote'); if(rn) rn.innerHTML=RECALL_NOTE?'<p class="note">'+RECALL_NOTE+'</p>':'';
+  renderBank('whodo','mc','whodoBody'); renderBank('whotr','mc','whotrBody');
+  renderStory('st1');
+  renderBank('slot','ty','slotBody'); renderBank('objq','mc','objqBody');
+  renderStory('st2');
+  xpRender();
+  restoreNotes(); paintRag(); refreshScore(); renderTabs();
+  if(document.getElementById('p-board').classList.contains('active')) renderBoard();
+}
+
+/* init: build the page, then require sign-in */
+renderAll();
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') hidePop(); });
+showGate();
+
+</script>
+
+<!-- ===== SAVE-FAILURE BANNER =====
+     A failed cloud save shows a red bar that is impossible to miss. It clears itself the moment a save succeeds. -->
+<script>
+window.__vsBanner = function(state){
+  try{
+    if(state === 'saving') return;
+    var on = (state === 'offline');
+    var b = document.getElementById('vs-savefail');
+    if(!b){
+      if(!on) return;
+      b = document.createElement('div');
+      b.id = 'vs-savefail';
+      b.setAttribute('role','alert');
+      b.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:2147483647;'
+        + 'background:#b3261e;color:#fff;font-family:Georgia,"Times New Roman",serif;'
+        + 'font-size:15px;line-height:1.5;padding:11px 18px;text-align:center;'
+        + 'box-shadow:0 3px 14px rgba(0,0,0,.45);';
+      b.innerHTML = '<b>NOT SAVED TO THE CLASS STORE.</b> Your answers are safe on this '
+        + 'computer, but they are not reaching your teacher. Say so before you carry on.'
+        + '<div style="font-size:12.5px;opacity:.9;margin-top:3px;">Keep working &mdash; '
+        + 'this clears itself the moment it reconnects.</div>';
+      (document.body || document.documentElement).appendChild(b);
+    }
+    b.style.display = on ? 'block' : 'none';
+    if(document.body) document.body.style.paddingTop = on ? (b.offsetHeight + 6) + 'px' : '';
+  }catch(e){}
+};
+</script>
+<script id="vs-pin-gate">
+/* Pupil PIN (26 Oct 2026). Adds a 4-digit PIN box to the sign-in gate and sends the PIN
+   with every cloud save/load. If the store answers "pin-required" / "pin" / "locked", a panel
+   asks for the PIN and the request is retried. The header is only ever sent after a PIN has
+   been typed, so this block is harmless against a Worker that does not know about PINs. */
+(function(){
+  if (window.__vsPinGate) return; window.__vsPinGate = true;
+  var HOST = "vestigia-store.mrbeasley930.workers.dev";
+  var PIN = "";                                   // the PIN in use this session
+  var memKey = function(cls, cand){ return "vs_pin::" + String(cls||"").toUpperCase().replace(/\s+/g,"") + "::" + String(cand||"").trim().toLowerCase(); };
+  function remember(cls, cand, pin){ PIN = pin; try { sessionStorage.setItem(memKey(cls,cand), pin); } catch(e){} }
+  function recall(cls, cand){ if (PIN) return PIN; try { return sessionStorage.getItem(memKey(cls,cand)) || ""; } catch(e){ return ""; } }
+  function gatePin(){ var el = document.getElementById("g-pin"); var v = el ? String(el.value||"").replace(/\D/g,"").slice(0,4) : ""; return v.length === 4 ? v : ""; }
+
+  /* ---- PIN box in the sign-in gate ---- */
+  function addBox(){
+    var cand = document.getElementById("g-cand"); if (!cand || document.getElementById("g-pin")) return;
+    var pin = document.createElement("input");
+    pin.id = "g-pin"; pin.type = "password"; pin.inputMode = "numeric"; pin.pattern = "[0-9]*"; pin.maxLength = 4;
+    pin.autocomplete = "off"; pin.placeholder = "4-digit PIN"; pin.setAttribute("aria-label","4-digit PIN");
+    pin.className = cand.className; pin.style.cssText = cand.style.cssText; pin.style.marginTop = "8px";
+    if (cand.style.width || /%|px/.test(getComputedStyle(cand).width)) pin.style.width = getComputedStyle(cand).width;
+    var lab = document.createElement("div"); lab.id = "g-pin-lab"; lab.textContent = "PIN (Mr Beasley gave you this)";
+    lab.style.cssText = "font-size:.85em;opacity:.8;margin-top:8px";
+    cand.parentNode.insertBefore(lab, cand.nextSibling); cand.parentNode.insertBefore(pin, lab.nextSibling);
+    pin.addEventListener("keydown", function(ev){ if (ev.key === "Enter") { ev.preventDefault(); var go = document.getElementById("g-go"); if (go) go.click(); else if (typeof signIn === "function") signIn(); } });
+    pin.addEventListener("input", function(){ pin.value = pin.value.replace(/\D/g,"").slice(0,4); });
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", addBox); else addBox();
+  new MutationObserver(addBox).observe(document.documentElement, { childList: true, subtree: true });
+
+  /* ---- PIN panel (shown only when the store asks) ---- */
+  var panel = null;
+  function ask(reason){
+    return new Promise(function(resolve){
+      if (panel) panel.remove();
+      panel = document.createElement("div");
+      panel.style.cssText = "position:fixed;inset:0;z-index:2147483000;background:rgba(10,10,20,.72);display:flex;align-items:center;justify-content:center;padding:16px;font-family:system-ui,Segoe UI,Arial,sans-serif";
+      var msg = reason === "pin" ? "That PIN is not right. Try again." : reason === "locked" ? "Too many wrong PINs. Wait 10 minutes, or ask Mr Beasley to reset it." : "Enter your 4-digit PIN to open your work.";
+      panel.innerHTML = '<div style="background:#fff;color:#222;border-radius:14px;max-width:340px;width:100%;padding:22px;box-shadow:0 12px 40px rgba(0,0,0,.35)">'
+        + '<div style="font-weight:700;font-size:1.15em;margin-bottom:6px">Your PIN</div>'
+        + '<div id="vs-pin-msg" style="font-size:.95em;margin-bottom:12px;color:' + (reason ? "#b00020" : "#444") + '">' + msg + '</div>'
+        + '<input id="vs-pin-in" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="off" placeholder="4-digit PIN" style="width:100%;box-sizing:border-box;font-size:1.4em;letter-spacing:.3em;text-align:center;padding:10px;border:2px solid #888;border-radius:10px">'
+        + '<div style="display:flex;gap:10px;margin-top:14px"><button id="vs-pin-ok" style="flex:1;padding:10px;border:0;border-radius:10px;background:#4F2A7F;color:#fff;font-weight:700;font-size:1em">Open my work</button>'
+        + '<button id="vs-pin-no" style="padding:10px 14px;border:1px solid #bbb;border-radius:10px;background:#f4f4f4;color:#333">Cancel</button></div>'
+        + '<div style="font-size:.8em;color:#666;margin-top:10px">Without the PIN your work will not save to the cloud.</div></div>';
+      document.body.appendChild(panel);
+      var inp = panel.querySelector("#vs-pin-in"); setTimeout(function(){ inp.focus(); }, 50);
+      function done(v){ panel.remove(); panel = null; resolve(v); }
+      inp.addEventListener("input", function(){ inp.value = inp.value.replace(/\D/g,"").slice(0,4); });
+      inp.addEventListener("keydown", function(ev){ if (ev.key === "Enter") ok(); });
+      function ok(){ var v = inp.value; if (v.length !== 4) { inp.style.borderColor = "#b00020"; return; } done(v); }
+      panel.querySelector("#vs-pin-ok").addEventListener("click", ok);
+      panel.querySelector("#vs-pin-no").addEventListener("click", function(){ done(""); });
+      if (reason === "locked") { inp.disabled = true; panel.querySelector("#vs-pin-ok").disabled = true; }
+    });
+  }
+
+  /* ---- wrap fetch ---- */
+  var realFetch = window.fetch.bind(window);
+  function isStore(url){ try { return new URL(url, location.href).host === HOST; } catch(e){ return false; } }
+  function identityFrom(url, init){
+    try {
+      var u = new URL(url, location.href), key = u.searchParams.get("key");
+      if (!key && init && typeof init.body === "string") { var b = JSON.parse(init.body); key = b.key; }
+      var p = String(key || "").split("::"); return { cls: p[1] || "", cand: p.slice(2).join("::") };
+    } catch(e){ return { cls: "", cand: "" }; }
+  }
+  function withPin(init, pin){
+    init = init ? Object.assign({}, init) : {};
+    var h = new Headers(init.headers || {}); if (pin) h.set("x-pupil-pin", pin); else h.delete("x-pupil-pin");
+    init.headers = h; return init;
+  }
+  window.fetch = async function(url, init){
+    var u = (typeof url === "string") ? url : (url && url.url) || "";
+    if (!isStore(u)) return realFetch(url, init);
+    var isTeacher = init && init.headers && new Headers(init.headers).has("x-teacher-token");
+    if (isTeacher) return realFetch(url, init);
+    var id = identityFrom(u, init);
+    var pin = gatePin() || recall(id.cls, id.cand);
+    var res;
+    if (pin) { try { res = await realFetch(url, withPin(init, pin)); } catch(e) { pin = ""; res = await realFetch(url, init); } }   // a store that does not accept the header yet
+    else res = await realFetch(url, init);
+    var tries = 0;
+    while ((res.status === 401 || res.status === 403 || res.status === 429) && tries < 6) {
+      var err = ""; try { err = (await res.clone().json()).error || ""; } catch(e){}
+      if (err !== "pin-required" && err !== "pin" && err !== "locked") return res;
+      if (err === "locked") { await ask("locked"); return res; }
+      var typed = await ask(pin ? "pin" : "");
+      if (!typed) return res;
+      pin = typed; tries++;
+      res = await realFetch(url, withPin(init, pin));
+    }
+    if (res.ok && pin) remember(id.cls, id.cand, pin);
+    return res;
+  };
+})();
+</script>
+</body>
+</html>
